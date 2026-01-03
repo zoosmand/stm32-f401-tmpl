@@ -1,0 +1,11 @@
+{
+  "files.associations": {
+    "*.c": "c",
+    "*.h": "c",
+    "*.s": "arm",
+    "*.S": "arm",
+    "*.inc": "arm"
+  },
+  "cortex-debug.variableUseNaturalFormat": false,
+  "makefile.configureOnOpen": false
+}
