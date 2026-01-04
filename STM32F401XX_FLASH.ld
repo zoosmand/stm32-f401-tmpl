@@ -164,6 +164,14 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
 
+  .dma_buffer (NOLOAD) :
+  {
+    . = ALIGN(4);
+    PROVIDE(__dma_buffer_start__ = .);
+    *(.dma_buffer)
+    PROVIDE(__dma_buffer_end__ = .);
+    . = ALIGN(4);
+  } >RAM
 
   /* Uninitialized data section */
   . = ALIGN(4);
