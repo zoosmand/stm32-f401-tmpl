@@ -259,12 +259,9 @@ HAL_StatusTypeDef ST7796_Init(void) {
   
 	write_cmd(0x29);                  // Display on                                          	
   
-  HAL_Delay(120);
+  HAL_Delay(10);
 
-  display_set_window(0, 0, (DISPLAY_WIDTH - 1), (DISPLAY_HEIGHT - 1));
-  
   return (ST7796_Fill(0x0000));
-  
 }
 
 
