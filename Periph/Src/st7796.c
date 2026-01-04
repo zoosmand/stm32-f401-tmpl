@@ -1,36 +1,72 @@
+/**
+  ******************************************************************************
+  * @file           : st7796.c
+  * @brief          : This file contain ST7796 TFT driver code.
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2017-2026 Askug Ltd.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
 
 #include "st7796.h"
 
 
 volatile bool st7796_dma_busy = false;
 
+__STATIC_INLINE void cs_l(void){ __NOP(); }
+__STATIC_INLINE void cs_h(void){ __NOP(); }
+// __STATIC_INLINE void cs_l(void){ HAL_GPIO_WritePin(TFT_CS_GPIO_Port, TFT_CS_Pin, GPIO_PIN_RESET); }
+// __STATIC_INLINE void cs_h(void){ HAL_GPIO_WritePin(TFT_CS_GPIO_Port, TFT_CS_Pin, GPIO_PIN_SET); }
+
+__STATIC_INLINE void dc_cmd(void){ HAL_GPIO_WritePin(TFT_DC_GPIO_Port, TFT_DC_Pin, GPIO_PIN_RESET); }
+__STATIC_INLINE void dc_data(void){ HAL_GPIO_WritePin(TFT_DC_GPIO_Port, TFT_DC_Pin, GPIO_PIN_SET); }
+
+__STATIC_INLINE void display_begin_data_stream(void) { cs_l(); dc_data(); }
+__STATIC_INLINE void display_end_data_stream(void) { cs_h(); }
 
 
-// st7796.c
-static inline void CS_L(void){ HAL_GPIO_WritePin(TFT_CS_GPIO_Port, TFT_CS_Pin, GPIO_PIN_RESET); }
-static inline void CS_H(void){ HAL_GPIO_WritePin(TFT_CS_GPIO_Port, TFT_CS_Pin, GPIO_PIN_SET); }
+#define PIX_BUF_SZ  2048  // bytes (1024 pixels)
+#define DISPLAY_WIDTH 320
+#define DISPLAY_HEIGHT 480
+__attribute__((section(".dma_buffer"), aligned(4))) static uint8_t pixbuf[PIX_BUF_SZ];
 
-static inline void DC_CMD(void){ HAL_GPIO_WritePin(TFT_DC_GPIO_Port, TFT_DC_Pin, GPIO_PIN_RESET); }
-static inline void DC_DATA(void){ HAL_GPIO_WritePin(TFT_DC_GPIO_Port, TFT_DC_Pin, GPIO_PIN_SET); }
 
-static void ST7796_WriteCmd(uint8_t cmd)
-{
-  CS_L();
-  DC_CMD();
+
+// --------------------------------------------------------------------------
+
+__STATIC_INLINE void write_cmd(uint8_t cmd) {
+  while (st7796_dma_busy);
+  cs_l();
+  dc_cmd();
   HAL_SPI_Transmit(&ST7796_SPI, &cmd, 1, HAL_MAX_DELAY);
-  CS_H();
+  cs_h();
 }
 
-static void ST7796_WriteData(const uint8_t *data, uint32_t len)
-{
-  CS_L();
-  DC_DATA();
+
+
+
+// --------------------------------------------------------------------------
+
+__STATIC_INLINE void write_data(const uint8_t *data, uint32_t len) {
+  while (st7796_dma_busy);
+  cs_l();
+  dc_data();
   HAL_SPI_Transmit(&ST7796_SPI, (uint8_t*)data, len, HAL_MAX_DELAY);
-  CS_H();
+  cs_h();
 }
 
-static void ST7796_Reset(void)
-{
+
+
+// --------------------------------------------------------------------------
+
+__STATIC_INLINE void display_reset(void) {
   HAL_GPIO_WritePin(TFT_RST_GPIO_Port, TFT_RST_Pin, GPIO_PIN_RESET);
   HAL_Delay(20);
   HAL_GPIO_WritePin(TFT_RST_GPIO_Port, TFT_RST_Pin, GPIO_PIN_SET);
@@ -39,158 +75,77 @@ static void ST7796_Reset(void)
 
 
 
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
-{
+
+// --------------------------------------------------------------------------
+
+__STATIC_INLINE void spi_wait_complete(SPI_HandleTypeDef *hspi) {
+  // Wait until TX buffer empty
+  while (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE) == RESET) { }
+  // Wait until not busy (last bit shifted out)
+  while (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_BSY) == SET) { }
+}
+
+
+
+
+// --------------------------------------------------------------------------
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
   if (hspi == &ST7796_SPI) {
-    CS_H();
+    spi_wait_complete(hspi);
     st7796_dma_busy = false;
   }
 }
 
-void ST7796_WriteData_DMA(uint8_t *data, uint32_t len)
-{
+
+
+
+// --------------------------------------------------------------------------
+
+__STATIC_INLINE void write_data_dma(uint8_t *data, uint32_t len) {
+
   while (st7796_dma_busy);
+  spi_wait_complete(&ST7796_SPI);
 
   st7796_dma_busy = true;
-
-  CS_L();
-  DC_DATA();
-
-  HAL_SPI_Transmit_DMA(&ST7796_SPI, data, len);
-}
-
-
-
-void ST7796_Init(void)
-{
-  // Backlight on (if controlled)
-//   HAL_GPIO_WritePin(TFT_BL_GPIO_Port, TFT_BL_Pin, GPIO_PIN_SET);
-
-  ST7796_Reset();
-
-  ST7796_WriteCmd(0x01);           // SWRESET
-  HAL_Delay(150);
-
-  ST7796_WriteCmd(0x11);           // SLPOUT
-  HAL_Delay(120);
-
-  uint8_t pixfmt = 0x55;           // 16-bit RGB565
-  ST7796_WriteCmd(0x3A);
-  ST7796_WriteData(&pixfmt, 1);
-
-  // MADCTL (0x36) - orientation / RGB order
-  // Typical: 0x48 or 0x28 depending on panel (RGB/BGR + row/col exchange)
-  uint8_t madctl = 0x48;           // start with this; if colors swapped try 0x40/0x08 toggles
-  ST7796_WriteCmd(0x36);
-  ST7796_WriteData(&madctl, 1);
-
-  ST7796_WriteCmd(0x21);           // INVON (often improves colors; if weird, try 0x20)
-  HAL_Delay(10);
-
-  ST7796_WriteCmd(0x29);           // DISPON
-  HAL_Delay(50);
-
-
-  ST7796_WriteCmd(0xB2); // Porch control
-  uint8_t porch[] = {0x0C, 0x0C, 0x00, 0x33, 0x33};
-  ST7796_WriteData(porch, 5);
-
-  ST7796_WriteCmd(0xB7); // Gate control
-  uint8_t gate = 0x35;
-  ST7796_WriteData(&gate, 1);
-
-  ST7796_WriteCmd(0xBB); // VCOM
-  uint8_t vcom = 0x28;
-  ST7796_WriteData(&vcom, 1);
-
-  ST7796_WriteCmd(0xC0); // LCM control
-  uint8_t lcm = 0x2C;
-  ST7796_WriteData(&lcm, 1);
-
-  ST7796_WriteCmd(0xC2); // VDV/VRH enable
-  uint8_t vdv_en = 0x01;
-  ST7796_WriteData(&vdv_en, 1);
-
-  ST7796_WriteCmd(0xC3); // VRH set
-  uint8_t vrh = 0x13;
-  ST7796_WriteData(&vrh, 1);
-
-  ST7796_WriteCmd(0xC4); // VDV set
-  uint8_t vdv = 0x20;
-  ST7796_WriteData(&vdv, 1);
-
-  ST7796_WriteCmd(0xC6); // Frame rate
-  uint8_t fr = 0x0F;
-  ST7796_WriteData(&fr, 1);
-
-}
-
-
-
-static void ST7796_SetAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
-{
-//   uint8_t data[4];
-
-//   ST7796_WriteCmd(0x2A); // CASET
-//   data[0] = x0 >> 8; data[1] = x0 & 0xFF;
-//   data[2] = x1 >> 8; data[3] = x1 & 0xFF;
-//   ST7796_WriteData(data, 4);
-
-//   ST7796_WriteCmd(0x2B); // RASET
-//   data[0] = y0 >> 8; data[1] = y0 & 0xFF;
-//   data[2] = y1 >> 8; data[3] = y1 & 0xFF;
-//   ST7796_WriteData(data, 4);
-
-//   ST7796_WriteCmd(0x2C); // RAMWR
-
-  uint8_t data[4];
-
-  ST7796_WriteCmd(0x2A);
-  data[0] = x0 >> 8; data[1] = x0;
-  data[2] = x1 >> 8; data[3] = x1;
-  ST7796_WriteData_DMA(data, 4);
-  while (st7796_dma_busy);
-
-  ST7796_WriteCmd(0x2B);
-  data[0] = y0 >> 8; data[1] = y0;
-  data[2] = y1 >> 8; data[3] = y1;
-  ST7796_WriteData_DMA(data, 4);
-  while (st7796_dma_busy);
-
-  ST7796_WriteCmd(0x2C);
-
-
-}
-
-void ST7796_FillColor(uint16_t color565)
-{
-  const uint16_t W = 320; // or 480 depending on your wiring/orientation
-  const uint16_t H = 480;
-
-  ST7796_SetAddrWindow(0, 0, W-1, H-1);
-
-  // stream pixels
-  CS_L();
-  DC_DATA();
-
-  uint8_t hi = color565 >> 8, lo = color565 & 0xFF;
-  for (uint32_t i = 0; i < (uint32_t)W * H; i++) {
-    uint8_t px[2] = {hi, lo};
-    HAL_SPI_Transmit(&ST7796_SPI, px, 2, HAL_MAX_DELAY);
+  
+  if (HAL_SPI_Transmit_DMA(&ST7796_SPI, data, len) != HAL_OK) {
+    st7796_dma_busy = false; // important safety
+    return;
   }
-
-  CS_H();
+  while (st7796_dma_busy);
+  spi_wait_complete(&ST7796_SPI);
 }
 
 
 
-#define PIX_BUF_SZ  512  // bytes (256 pixels)
-
-static uint8_t pixbuf[PIX_BUF_SZ];
 
 
-static void ST7796_PrepareColor(uint16_t color)
-{
+// --------------------------------------------------------------------------
+
+__STATIC_INLINE void display_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+
+uint8_t data[4];
+
+  write_cmd(0x2a);
+  data[0] = x0 >> 8; data[1] = x0 & 0xFF;
+  data[2] = x1 >> 8; data[3] = x1 & 0xFF;
+  write_data(data, 4);
+
+  write_cmd(0x2b);
+  data[0] = y0 >> 8; data[1] = y0 & 0xFF;
+  data[2] = y1 >> 8; data[3] = y1 & 0xFF;
+  write_data(data, 4);
+
+  write_cmd(0x2c);
+}
+
+
+
+
+// --------------------------------------------------------------------------
+
+__STATIC_INLINE void display_prepare_color(uint16_t color) {
   for (uint32_t i = 0; i < PIX_BUF_SZ; i += 2) {
     pixbuf[i]   = color >> 8;
     pixbuf[i+1] = color & 0xFF;
@@ -198,17 +153,145 @@ static void ST7796_PrepareColor(uint16_t color)
 }
 
 
-void ST7796_Fill(uint16_t color)
-{
-  ST7796_SetAddrWindow(0, 0, 319, 479);
 
-  ST7796_PrepareColor(color);
 
-  uint32_t total = 320UL * 480UL * 2;
+// --------------------------------------------------------------------------
+
+void ST7796_Init(void) {
+
+  uint8_t initData[16];
+
+  display_reset();
+
+	HAL_Delay(120);
+
+	write_cmd(0x01);                  // Software reset
+	HAL_Delay(120);
+
+	write_cmd(0x11);                  // Sleep exit                                            
+	HAL_Delay(120);
+
+	write_cmd(0xf0);                  // Command Set control
+  initData[0] = 0xc3;               // - Enable extension command 2 partI
+	write_data(initData, 1);      
+	
+	write_cmd(0xf0);                  // Command Set control                                 
+  initData[0] = 0x96;               // - Enable extension command 2 partII
+  write_data(initData, 1);    
+	
+	write_cmd(0x36);                  // Memory Data Access Control MX, MY, RGB mode                                    
+  initData[0] = 0x48;               // - X-Mirror, Top-Left to right-Buttom, RGB
+	write_data(initData, 1);      
+	
+	write_cmd(0x3a);                  // Interface Pixel Format                                    
+  initData[0] = 0x55;               // - Control interface color format set to 16
+	write_data(initData, 1);    
+	
+	write_cmd(0xb4);                  // Column inversion 
+  initData[0] = 0x01;               // - 1-dot inversion
+	write_data(initData, 1);
+
+	write_cmd(0xb6);                  // Display Function Control
+  initData[0] = 0x80;               // - Bypass
+  initData[1] = 0x02;               // - Source Output Scan from S1 to S960, Gate Output scan from G1 to G480, scan cycle=2
+  initData[2] = 0x3b;               // - LCD Drive Line=8*(59+1)
+	write_data(initData, 3);    
+
+	write_cmd(0xe8);                  // Display Output Ctrl Adjust
+  initData[0] = 0x40;
+  initData[1] = 0x8a;
+  initData[2] = 0x00;
+  initData[3] = 0x00;
+  initData[4] = 0x29;               // - Source eqaulizing period time= 22.5 us
+  initData[5] = 0x19;               // - Timing for "Gate start"=25 (Tclk)
+  initData[6] = 0xa5;               // - Timing for "Gate End"=37 (Tclk), Gate driver EQ function ON
+  initData[7] = 0x33;
+	write_data(initData, 8);
+	
+	write_cmd(0xc1);                  // Power control2                          
+  initData[0] = 0x06;               // - VAP(GVDD)=3.85+( vcom+vcom offset), VAN(GVCL)=-3.85+( vcom+vcom offset)
+	write_data(initData, 1);    
+	 
+	write_cmd(0xc2);                  // Power control 3                                      
+  initData[0] = 0xa7;               // - Source driving current level=low, Gamma driving current level=High
+	write_data(initData, 1);    
+	 
+	write_cmd(0xc5);                  // VCOM Control
+  initData[0] = 0x18;               // - VCOM=0.9
+	write_data(initData, 1);    
+
+	HAL_Delay(120);
+	
+	write_cmd(0xe0);                  // Gamma"+"                                             
+  initData[0] = 0xf0;
+  initData[1] = 0x09;
+  initData[2] = 0x0b;
+  initData[3] = 0x06;
+  initData[4] = 0x04;
+  initData[5] = 0x15;
+  initData[6] = 0x2f;
+  initData[7] = 0x54;
+  initData[8] = 0x42;
+  initData[9] = 0x3c;
+  initData[10] = 0x17;
+  initData[11] = 0x14;
+  initData[12] = 0x18;
+  initData[13] = 0x18;
+	write_data(initData, 14);
+	 
+	write_cmd(0xe1);                  // Gamma"-"                                             
+  initData[0] = 0xe0;
+  initData[1] = 0x09;
+  initData[2] = 0x0b;
+  initData[3] = 0x06;
+  initData[4] = 0x04;
+  initData[5] = 0x03;
+  initData[6] = 0x2b;
+  initData[7] = 0x43;
+  initData[8] = 0x42;
+  initData[9] = 0x3b;
+  initData[10] = 0x16;
+  initData[11] = 0x14;
+  initData[12] = 0x17;
+  initData[13] = 0x1b;
+	write_data(initData, 14);
+
+  HAL_Delay(120);
+	
+	write_cmd(0xf0);                  // Command Set control            
+  initData[0] = 0x3c;               // - Disable extension command 2 partI
+	write_data(initData, 1);    
+
+	write_cmd(0xf0);                  // Command Set control                                 
+  initData[0] = 0x69;               // - Disable extension command 2 partII
+	write_data(initData, 1);    
+
+  HAL_Delay(120);
+  
+	write_cmd(0x29);                  // Display on                                          	
+  
+  HAL_Delay(120);
+
+  display_set_window(0, 0, (DISPLAY_WIDTH - 1), (DISPLAY_HEIGHT - 1));
+  ST7796_Fill(0x0000);
+  
+}
+
+
+
+// --------------------------------------------------------------------------
+
+void ST7796_Fill(uint16_t color) {
+  display_set_window(0, 0, (DISPLAY_WIDTH - 1), (DISPLAY_HEIGHT - 1));
+
+  display_prepare_color(color);
+  
+  uint32_t total = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
+  display_begin_data_stream();
   while (total) {
     uint32_t chunk = (total > PIX_BUF_SZ) ? PIX_BUF_SZ : total;
-    ST7796_WriteData_DMA(pixbuf, chunk);
-    while (st7796_dma_busy);
+    write_data_dma(pixbuf, chunk);
     total -= chunk;
   }
+  display_end_data_stream();
 }

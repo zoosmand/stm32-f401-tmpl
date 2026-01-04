@@ -1,3 +1,21 @@
+/**
+  ******************************************************************************
+  * @file           : main.h
+  * @brief          : Header for st7796.c file.
+  *                   This file contains the common defines of the ST7796 TFT
+  *                   driver code.
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2017-2026 Askug Ltd.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
 
 
 
@@ -29,7 +47,7 @@ extern "C" {
 
 void ST7796_Init(void);
 // void ST7796_SetAddrWindow(uint16_t, uint16_t, uint16_t, uint16_t);
-void ST7796_FillColor(uint16_t);
+// void ST7796_FillColor(uint16_t);
 void ST7796_Fill(uint16_t);
 
 
