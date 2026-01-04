@@ -73,10 +73,21 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
 
 
 
+// --------------------------------------------------------------------------
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
+  if (hspi == &ST7796_SPI) {
+    st7796_dma_busy = false;
+  }
+}
+
+
 
 // --------------------------------------------------------------------------
 
 __STATIC_INLINE void write_data_dma(uint8_t *data, uint32_t len) {
+
+  while (st7796_dma_busy);
 
   dc_data();
   st7796_dma_busy = true;
@@ -132,9 +143,9 @@ HAL_StatusTypeDef ST7796_Init(void) {
 
   uint8_t initData[16];
 
-  size_t dma_size = (size_t)(&__dma_buffer_end__ - &__dma_buffer_start__);
+  size_t dma_size = (size_t)((uintptr_t)&__dma_buffer_end__ - (uintptr_t)&__dma_buffer_start__);
 
-    // optional sanity check
+  // optional sanity check
   if (dma_size != 2048) {
     return (HAL_ERROR);
   }
