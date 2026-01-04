@@ -25,10 +25,10 @@ __STATIC_INLINE void dc_cmd(void){ HAL_GPIO_WritePin(TFT_DC_GPIO_Port, TFT_DC_Pi
 __STATIC_INLINE void dc_data(void){ HAL_GPIO_WritePin(TFT_DC_GPIO_Port, TFT_DC_Pin, GPIO_PIN_SET); }
 
 
-#define PIX_BUF_SZ  2048  // bytes (1024 pixels)
+#define PIX_BUF_SZ 1024  // words (1024 pixels)
 #define DISPLAY_WIDTH 320
 #define DISPLAY_HEIGHT 480
-__attribute__((section(".dma_buffer"), aligned(4))) static uint8_t pixbuf[PIX_BUF_SZ];
+__attribute__((section(".dma_buffer"), aligned(4))) static uint16_t pixbuf[PIX_BUF_SZ];
 
 
 
@@ -68,6 +68,8 @@ __STATIC_INLINE void display_reset(void) {
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
   if (hspi == &ST7796_SPI) {
     st7796_dma_busy = false;
+    // switch to 8-bit bandwidth
+    ST7796_SPI.Instance->CR1 &= ~SPI_CR1_DFF; 
   }
 }
 
@@ -78,6 +80,8 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
   if (hspi == &ST7796_SPI) {
     st7796_dma_busy = false;
+    // switch to 8-bit bandwidth
+    ST7796_SPI.Instance->CR1 &= ~SPI_CR1_DFF; 
   }
 }
 
@@ -85,14 +89,16 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
 
 // --------------------------------------------------------------------------
 
-__STATIC_INLINE void write_data_dma(uint8_t *data, uint32_t len) {
+__STATIC_INLINE void write_data_dma(uint16_t *data, uint32_t len) {
 
   while (st7796_dma_busy);
 
   dc_data();
   st7796_dma_busy = true;
+  // switch to 16-bit bandwidth
+  ST7796_SPI.Instance->CR1 |= SPI_CR1_DFF; 
   
-  if (HAL_SPI_Transmit_DMA(&ST7796_SPI, data, len) != HAL_OK) {
+  if (HAL_SPI_Transmit_DMA(&ST7796_SPI, (uint8_t*)data, len) != HAL_OK) {
     st7796_dma_busy = false; // important safety
     return;
   }
@@ -128,9 +134,8 @@ uint8_t data[4];
 // --------------------------------------------------------------------------
 
 __STATIC_INLINE void display_prepare_color(uint16_t color) {
-  for (uint32_t i = 0; i < PIX_BUF_SZ; i += 2) {
-    pixbuf[i]   = color >> 8;
-    pixbuf[i+1] = color & 0xFF;
+  for (uint32_t i = 0; i < PIX_BUF_SZ; i++) {
+    pixbuf[i] = color;
   }
 }
 
@@ -273,7 +278,7 @@ HAL_StatusTypeDef ST7796_Fill(uint16_t color) {
 
   display_prepare_color(color);
   
-  uint32_t total = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
+  uint32_t total = DISPLAY_WIDTH * DISPLAY_HEIGHT;
   while (total) {
     uint32_t chunk = (total > PIX_BUF_SZ) ? PIX_BUF_SZ : total;
     write_data_dma(pixbuf, chunk);
