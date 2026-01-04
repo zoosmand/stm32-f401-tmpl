@@ -20,16 +20,9 @@
 
 volatile bool st7796_dma_busy = false;
 
-__STATIC_INLINE void cs_l(void){ __NOP(); }
-__STATIC_INLINE void cs_h(void){ __NOP(); }
-// __STATIC_INLINE void cs_l(void){ HAL_GPIO_WritePin(TFT_CS_GPIO_Port, TFT_CS_Pin, GPIO_PIN_RESET); }
-// __STATIC_INLINE void cs_h(void){ HAL_GPIO_WritePin(TFT_CS_GPIO_Port, TFT_CS_Pin, GPIO_PIN_SET); }
 
 __STATIC_INLINE void dc_cmd(void){ HAL_GPIO_WritePin(TFT_DC_GPIO_Port, TFT_DC_Pin, GPIO_PIN_RESET); }
 __STATIC_INLINE void dc_data(void){ HAL_GPIO_WritePin(TFT_DC_GPIO_Port, TFT_DC_Pin, GPIO_PIN_SET); }
-
-__STATIC_INLINE void display_begin_data_stream(void) { cs_l(); dc_data(); }
-__STATIC_INLINE void display_end_data_stream(void) { cs_h(); }
 
 
 #define PIX_BUF_SZ  2048  // bytes (1024 pixels)
@@ -43,10 +36,8 @@ __attribute__((section(".dma_buffer"), aligned(4))) static uint8_t pixbuf[PIX_BU
 
 __STATIC_INLINE void write_cmd(uint8_t cmd) {
   while (st7796_dma_busy);
-  cs_l();
   dc_cmd();
   HAL_SPI_Transmit(&ST7796_SPI, &cmd, 1, HAL_MAX_DELAY);
-  cs_h();
 }
 
 
@@ -56,10 +47,8 @@ __STATIC_INLINE void write_cmd(uint8_t cmd) {
 
 __STATIC_INLINE void write_data(const uint8_t *data, uint32_t len) {
   while (st7796_dma_busy);
-  cs_l();
   dc_data();
   HAL_SPI_Transmit(&ST7796_SPI, (uint8_t*)data, len, HAL_MAX_DELAY);
-  cs_h();
 }
 
 
@@ -104,6 +93,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
 
 __STATIC_INLINE void write_data_dma(uint8_t *data, uint32_t len) {
 
+  dc_data();
   while (st7796_dma_busy);
   spi_wait_complete(&ST7796_SPI);
 
@@ -287,11 +277,9 @@ void ST7796_Fill(uint16_t color) {
   display_prepare_color(color);
   
   uint32_t total = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
-  display_begin_data_stream();
   while (total) {
     uint32_t chunk = (total > PIX_BUF_SZ) ? PIX_BUF_SZ : total;
     write_data_dma(pixbuf, chunk);
     total -= chunk;
   }
-  display_end_data_stream();
 }
