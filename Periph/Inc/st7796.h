@@ -45,10 +45,12 @@ extern "C" {
 // #define TFT_BL_Pin       GPIO_PIN_10   // optional (or tie to VCC)
 
 
-void ST7796_Init(void);
-// void ST7796_SetAddrWindow(uint16_t, uint16_t, uint16_t, uint16_t);
-// void ST7796_FillColor(uint16_t);
-void ST7796_Fill(uint16_t);
+extern uint8_t __dma_buffer_start__;
+extern uint8_t __dma_buffer_end__;
+
+
+HAL_StatusTypeDef ST7796_Init(void);
+HAL_StatusTypeDef ST7796_Fill(uint16_t);
 
 
 

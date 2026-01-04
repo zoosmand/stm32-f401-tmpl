@@ -167,7 +167,9 @@ SECTIONS
   .dma_buffer (NOLOAD) :
   {
     . = ALIGN(4);
+    PROVIDE(__dma_buffer_start__ = .);
     *(.dma_buffer)
+    PROVIDE(__dma_buffer_end__ = .);
     . = ALIGN(4);
   } >RAM
 

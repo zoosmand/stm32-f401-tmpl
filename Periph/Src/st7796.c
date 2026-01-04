@@ -35,7 +35,6 @@ __attribute__((section(".dma_buffer"), aligned(4))) static uint8_t pixbuf[PIX_BU
 // --------------------------------------------------------------------------
 
 __STATIC_INLINE void write_cmd(uint8_t cmd) {
-  while (st7796_dma_busy);
   dc_cmd();
   HAL_SPI_Transmit(&ST7796_SPI, &cmd, 1, HAL_MAX_DELAY);
 }
@@ -46,7 +45,6 @@ __STATIC_INLINE void write_cmd(uint8_t cmd) {
 // --------------------------------------------------------------------------
 
 __STATIC_INLINE void write_data(const uint8_t *data, uint32_t len) {
-  while (st7796_dma_busy);
   dc_data();
   HAL_SPI_Transmit(&ST7796_SPI, (uint8_t*)data, len, HAL_MAX_DELAY);
 }
@@ -67,21 +65,8 @@ __STATIC_INLINE void display_reset(void) {
 
 // --------------------------------------------------------------------------
 
-__STATIC_INLINE void spi_wait_complete(SPI_HandleTypeDef *hspi) {
-  // Wait until TX buffer empty
-  while (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE) == RESET) { }
-  // Wait until not busy (last bit shifted out)
-  while (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_BSY) == SET) { }
-}
-
-
-
-
-// --------------------------------------------------------------------------
-
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
   if (hspi == &ST7796_SPI) {
-    spi_wait_complete(hspi);
     st7796_dma_busy = false;
   }
 }
@@ -94,9 +79,6 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
 __STATIC_INLINE void write_data_dma(uint8_t *data, uint32_t len) {
 
   dc_data();
-  while (st7796_dma_busy);
-  spi_wait_complete(&ST7796_SPI);
-
   st7796_dma_busy = true;
   
   if (HAL_SPI_Transmit_DMA(&ST7796_SPI, data, len) != HAL_OK) {
@@ -104,7 +86,6 @@ __STATIC_INLINE void write_data_dma(uint8_t *data, uint32_t len) {
     return;
   }
   while (st7796_dma_busy);
-  spi_wait_complete(&ST7796_SPI);
 }
 
 
@@ -118,13 +99,13 @@ __STATIC_INLINE void display_set_window(uint16_t x0, uint16_t y0, uint16_t x1, u
 uint8_t data[4];
 
   write_cmd(0x2a);
-  data[0] = x0 >> 8; data[1] = x0 & 0xFF;
-  data[2] = x1 >> 8; data[3] = x1 & 0xFF;
+  data[0] = x0 >> 8; data[1] = x0 & 0xff;
+  data[2] = x1 >> 8; data[3] = x1 & 0xff;
   write_data(data, 4);
 
   write_cmd(0x2b);
-  data[0] = y0 >> 8; data[1] = y0 & 0xFF;
-  data[2] = y1 >> 8; data[3] = y1 & 0xFF;
+  data[0] = y0 >> 8; data[1] = y0 & 0xff;
+  data[2] = y1 >> 8; data[3] = y1 & 0xff;
   write_data(data, 4);
 
   write_cmd(0x2c);
@@ -147,9 +128,16 @@ __STATIC_INLINE void display_prepare_color(uint16_t color) {
 
 // --------------------------------------------------------------------------
 
-void ST7796_Init(void) {
+HAL_StatusTypeDef ST7796_Init(void) {
 
   uint8_t initData[16];
+
+  size_t dma_size = (size_t)(&__dma_buffer_end__ - &__dma_buffer_start__);
+
+    // optional sanity check
+  if (dma_size != 2048) {
+    return (HAL_ERROR);
+  }
 
   display_reset();
 
@@ -263,7 +251,8 @@ void ST7796_Init(void) {
   HAL_Delay(120);
 
   display_set_window(0, 0, (DISPLAY_WIDTH - 1), (DISPLAY_HEIGHT - 1));
-  ST7796_Fill(0x0000);
+  
+  return (ST7796_Fill(0x0000));
   
 }
 
@@ -271,7 +260,7 @@ void ST7796_Init(void) {
 
 // --------------------------------------------------------------------------
 
-void ST7796_Fill(uint16_t color) {
+HAL_StatusTypeDef ST7796_Fill(uint16_t color) {
   display_set_window(0, 0, (DISPLAY_WIDTH - 1), (DISPLAY_HEIGHT - 1));
 
   display_prepare_color(color);
@@ -282,4 +271,6 @@ void ST7796_Fill(uint16_t color) {
     write_data_dma(pixbuf, chunk);
     total -= chunk;
   }
+
+  return (HAL_OK);
 }

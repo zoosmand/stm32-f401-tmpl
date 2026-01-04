@@ -105,10 +105,10 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  ST7796_Init();
-  ST7796_Fill(0xF800); // red
-  ST7796_Fill(0xF8F8); // purple
-
+  if (ST7796_Init() == HAL_OK) {
+    ST7796_Fill(0xF800); // red
+    ST7796_Fill(0xF8F8); // purple
+  }
 
   /* USER CODE END 2 */
 
