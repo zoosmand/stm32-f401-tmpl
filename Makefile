@@ -120,6 +120,7 @@ AS_INCLUDES =
 C_INCLUDES = \
 -ICore/Inc \
 -IPeriph/Inc \
+-ISrv/Inc \
 -IDrivers/STM32F4xx_HAL_Driver/Inc \
 -IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \

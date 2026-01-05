@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file           : main.h
+  * @file           : st7796.h
   * @brief          : Header for st7796.c file.
   *                   This file contains the common defines of the ST7796 TFT
   *                   driver code.
@@ -36,7 +36,7 @@ extern "C" {
 #define CLR_BLUE    (uint16_t)0x07e0
 #define CLR_PURPLE  (uint16_t)(CLR_RED | CLR_BLUE)
 #define CLR_SKY     (uint16_t)(CLR_GREEN | CLR_BLUE)
-#define CLR_LEMON   (uint16_t)(CLR_GREEN | CLR_RED)
+#define CLR_LIME    (uint16_t)(CLR_GREEN | CLR_RED)
 
 
 // st7796_conf.h

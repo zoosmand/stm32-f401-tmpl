@@ -111,7 +111,7 @@ int main(void)
     ST7796_Fill(CLR_BLUE); // blue
     ST7796_Fill(CLR_PURPLE); // purple
     ST7796_Fill(CLR_SKY); // sky-blue
-    ST7796_Fill(CLR_LEMON); // yellow
+    ST7796_Fill(CLR_LIME); // yellow
   }
 
   /* USER CODE END 2 */

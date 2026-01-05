@@ -34,6 +34,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "st7796.h"
+#include "display.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
