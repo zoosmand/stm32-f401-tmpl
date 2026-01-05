@@ -244,7 +244,7 @@ Display_TypeDef* ST7796_Init(void) {
   
   HAL_Delay(10);
 
-  // clear diaplay
+  // clear display
   if (Display_Fill(dev, COLOR_BLACK) != HAL_OK) return dev;
 
   dev->Lock = DISABLE;

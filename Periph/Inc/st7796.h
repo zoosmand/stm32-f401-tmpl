@@ -40,8 +40,6 @@ extern "C" {
 #define COLOR_LIME        (uint16_t)(COLOR_GREEN | COLOR_RED)
 
 
-// st7796_conf.h
-// #define ST7796_SPI        hspi1
 #define PIX_BUF_SZ        1024  // words (1024 pixels)
 #define DISPLAY_WIDTH     320
 #define DISPLAY_HEIGHT    480

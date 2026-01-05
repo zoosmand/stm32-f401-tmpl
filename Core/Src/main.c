@@ -120,7 +120,7 @@ int main(void)
     // SET_BIT(GPIOC->BSRR, GPIO_BSRR_BR13);
     // HAL_Delay(1000);
 
-    Display_Run(display_0);
+    if (display_0->Lock == DISABLE) Display_Run(display_0);
 
     /* USER CODE BEGIN 3 */
   }
