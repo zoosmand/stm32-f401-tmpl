@@ -19,13 +19,12 @@
 
 
 
-
-
-
-
-
 #define SIMPLE_PAUSE 1000U;
-static volatile uint32_t step = 0;
+
+static __IO uint32_t step = 0;
+
+
+
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -37,23 +36,18 @@ static volatile uint32_t step = 0;
 // --------------------------------------------------------------------------
 
 void Display_Run(Display_TypeDef* dev) {
+
+  if (dev->Lock == ENABLE) return;
   
   uint32_t tick = HAL_GetTick();
   
-  if (step > tick) {
+  if (step >= tick) {
     return;
   } else {
     step = tick + SIMPLE_PAUSE;
     
-    // ST7796_Fill(CLR_RED); // red
-    // ST7796_Fill(CLR_GREEN); // green
-    // ST7796_Fill(CLR_BLUE); // blue
-    // ST7796_Fill(CLR_PURPLE); // purple
-    // ST7796_Fill(CLR_SKY); // sky-blue
-    // ST7796_Fill(CLR_LIME); // yellow
-    
     Display_Fill(dev, (uint16_t)(step & 0xffff));
-    DisplayFillRectangle(dev, 40, 120, 10, 65, COLOR_LIME);
+    Display_FillRectangle(dev, 40, 120, 10, 65, COLOR_LIME);
   }
 }
 

@@ -42,11 +42,6 @@ typedef struct {
 } Display_TypeDef;
 
 
-HAL_StatusTypeDef __attribute__((weak)) Display_SetWindow(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef*, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) DisplayFillRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) DisplayDrawPixel(Display_TypeDef*, uint16_t, uint16_t, uint16_t);
-
 
 
 
