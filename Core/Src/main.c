@@ -106,8 +106,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   if (ST7796_Init() == HAL_OK) {
-    ST7796_Fill(0xf800); // red
-    ST7796_Fill(0xf8f8); // purple
+    ST7796_Fill(CLR_RED); // red
+    ST7796_Fill(CLR_GREEN); // green
+    ST7796_Fill(CLR_BLUE); // blue
+    ST7796_Fill(CLR_PURPLE); // purple
+    ST7796_Fill(CLR_SKY); // sky-blue
+    ST7796_Fill(CLR_LEMON); // yellow
   }
 
   /* USER CODE END 2 */

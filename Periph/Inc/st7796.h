@@ -29,6 +29,16 @@ extern "C" {
 
 #include "main.h"
 
+
+/* Define colors*/
+#define CLR_RED     (uint16_t)0xf800
+#define CLR_GREEN   (uint16_t)0x001f
+#define CLR_BLUE    (uint16_t)0x07e0
+#define CLR_PURPLE  (uint16_t)(CLR_RED | CLR_BLUE)
+#define CLR_SKY     (uint16_t)(CLR_GREEN | CLR_BLUE)
+#define CLR_LEMON   (uint16_t)(CLR_GREEN | CLR_RED)
+
+
 // st7796_conf.h
 #define ST7796_SPI       hspi1
 

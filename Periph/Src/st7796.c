@@ -68,8 +68,6 @@ __STATIC_INLINE void display_reset(void) {
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
   if (hspi == &ST7796_SPI) {
     st7796_dma_busy = false;
-    // switch to 8-bit bandwidth
-    ST7796_SPI.Instance->CR1 &= ~SPI_CR1_DFF; 
   }
 }
 
@@ -90,13 +88,11 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
 // --------------------------------------------------------------------------
 
 __STATIC_INLINE void write_data_dma(uint16_t *data, uint32_t len) {
-
+  
   while (st7796_dma_busy);
-
+  
   dc_data();
   st7796_dma_busy = true;
-  // switch to 16-bit bandwidth
-  ST7796_SPI.Instance->CR1 |= SPI_CR1_DFF; 
   
   if (HAL_SPI_Transmit_DMA(&ST7796_SPI, (uint8_t*)data, len) != HAL_OK) {
     st7796_dma_busy = false; // important safety
@@ -104,7 +100,6 @@ __STATIC_INLINE void write_data_dma(uint16_t *data, uint32_t len) {
   }
   while (st7796_dma_busy);
 }
-
 
 
 
@@ -174,11 +169,12 @@ HAL_StatusTypeDef ST7796_Init(void) {
   write_data(initData, 1);    
 	
 	write_cmd(0x36);                  // Memory Data Access Control MX, MY, RGB mode                                    
-  initData[0] = 0x48;               // - X-Mirror, Top-Left to right-Buttom, RGB
+  initData[0] = 0xc0;               // - Default orientation, RGB
+  // initData[0] = 0x48;            // - X-Mirror, Top-Left to right-Buttom, RGB
 	write_data(initData, 1);      
 	
 	write_cmd(0x3a);                  // Interface Pixel Format                                    
-  initData[0] = 0x55;               // - Control interface color format set to 16
+  initData[0] = 0x55;               // - Control interface color format set to RGB 565
 	write_data(initData, 1);    
 	
 	write_cmd(0xb4);                  // Column inversion 
@@ -250,17 +246,17 @@ HAL_StatusTypeDef ST7796_Init(void) {
   initData[13] = 0x1b;
 	write_data(initData, 14);
 
-  HAL_Delay(120);
+  // HAL_Delay(120);
 	
-	write_cmd(0xf0);                  // Command Set control            
-  initData[0] = 0x3c;               // - Disable extension command 2 partI
-	write_data(initData, 1);    
+	// write_cmd(0xf0);                  // Command Set control            
+  // initData[0] = 0x3c;               // - Disable extension command 2 partI
+	// write_data(initData, 1);    
 
-	write_cmd(0xf0);                  // Command Set control                                 
-  initData[0] = 0x69;               // - Disable extension command 2 partII
-	write_data(initData, 1);    
+	// write_cmd(0xf0);                  // Command Set control                                 
+  // initData[0] = 0x69;               // - Disable extension command 2 partII
+	// write_data(initData, 1);    
 
-  HAL_Delay(120);
+  // HAL_Delay(120);
   
 	write_cmd(0x29);                  // Display on                                          	
   
@@ -277,8 +273,8 @@ HAL_StatusTypeDef ST7796_Fill(uint16_t color) {
   display_set_window(0, 0, (DISPLAY_WIDTH - 1), (DISPLAY_HEIGHT - 1));
 
   display_prepare_color(color);
-  
-  uint32_t total = DISPLAY_WIDTH * DISPLAY_HEIGHT;
+
+  uint32_t total = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
   while (total) {
     uint32_t chunk = (total > PIX_BUF_SZ) ? PIX_BUF_SZ : total;
     write_data_dma(pixbuf, chunk);
