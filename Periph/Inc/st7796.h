@@ -31,12 +31,13 @@ extern "C" {
 
 
 /* Define colors*/
-#define CLR_RED     (uint16_t)0xf800
-#define CLR_GREEN   (uint16_t)0x001f
-#define CLR_BLUE    (uint16_t)0x07e0
-#define CLR_PURPLE  (uint16_t)(CLR_RED | CLR_BLUE)
-#define CLR_SKY     (uint16_t)(CLR_GREEN | CLR_BLUE)
-#define CLR_LIME    (uint16_t)(CLR_GREEN | CLR_RED)
+#define COLOR_BLACK     (uint16_t)0x0000
+#define COLOR_RED       (uint16_t)0xf800
+#define COLOR_GREEN     (uint16_t)0x001f
+#define COLOR_BLUE      (uint16_t)0x07e0
+#define COLOR_PURPLE    (uint16_t)(COLOR_RED | COLOR_BLUE)
+#define COLOR_SKY       (uint16_t)(COLOR_GREEN | COLOR_BLUE)
+#define COLOR_LIME      (uint16_t)(COLOR_GREEN | COLOR_RED)
 
 
 // st7796_conf.h
@@ -59,7 +60,7 @@ extern uint8_t __dma_buffer_start__;
 extern uint8_t __dma_buffer_end__;
 
 
-HAL_StatusTypeDef ST7796_Init(void);
+Display_TypeDef* ST7796_Init(void);
 HAL_StatusTypeDef ST7796_Fill(uint16_t);
 
 

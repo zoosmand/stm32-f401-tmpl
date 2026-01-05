@@ -27,10 +27,12 @@
 extern "C" {
 #endif
 
+
 #include "main.h"
 
 
 
+void Display_Run(Display_TypeDef*);
 
 
 

@@ -105,14 +105,7 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  if (ST7796_Init() == HAL_OK) {
-    ST7796_Fill(CLR_RED); // red
-    ST7796_Fill(CLR_GREEN); // green
-    ST7796_Fill(CLR_BLUE); // blue
-    ST7796_Fill(CLR_PURPLE); // purple
-    ST7796_Fill(CLR_SKY); // sky-blue
-    ST7796_Fill(CLR_LIME); // yellow
-  }
+  Display_TypeDef* display_0 = ST7796_Init();
 
   /* USER CODE END 2 */
 
@@ -122,10 +115,12 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-    SET_BIT(GPIOC->BSRR, GPIO_BSRR_BS13);
-    HAL_Delay(1000);
-    SET_BIT(GPIOC->BSRR, GPIO_BSRR_BR13);
-    HAL_Delay(1000);
+    // SET_BIT(GPIOC->BSRR, GPIO_BSRR_BS13);
+    // HAL_Delay(1000);
+    // SET_BIT(GPIOC->BSRR, GPIO_BSRR_BR13);
+    // HAL_Delay(1000);
+
+    Display_Run(display_0);
 
     /* USER CODE BEGIN 3 */
   }

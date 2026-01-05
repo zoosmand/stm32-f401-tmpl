@@ -18,7 +18,7 @@
 #include "st7796.h"
 
 
-volatile bool st7796_dma_busy = false;
+__IO bool st7796_dma_busy = false;
 
 
 __STATIC_INLINE void dc_cmd(void){ HAL_GPIO_WritePin(TFT_DC_GPIO_Port, TFT_DC_Pin, GPIO_PIN_RESET); }
@@ -29,6 +29,16 @@ __STATIC_INLINE void dc_data(void){ HAL_GPIO_WritePin(TFT_DC_GPIO_Port, TFT_DC_P
 #define DISPLAY_WIDTH 320
 #define DISPLAY_HEIGHT 480
 __attribute__((section(".dma_buffer"), aligned(4))) static uint16_t pixbuf[PIX_BUF_SZ];
+
+static Display_TypeDef display_0 = {
+  .Model      = 7796,
+  .Device     = (uint32_t*)&hspi1,
+  .PixBuf     = pixbuf,
+  .PixBufSize = PIX_BUF_SZ,
+  .Width      = DISPLAY_WIDTH,
+  .Height     = DISPLAY_HEIGHT,
+};
+
 
 
 
@@ -78,8 +88,6 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
   if (hspi == &ST7796_SPI) {
     st7796_dma_busy = false;
-    // switch to 8-bit bandwidth
-    ST7796_SPI.Instance->CR1 &= ~SPI_CR1_DFF; 
   }
 }
 
@@ -106,40 +114,9 @@ __STATIC_INLINE void write_data_dma(uint16_t *data, uint32_t len) {
 
 // --------------------------------------------------------------------------
 
-__STATIC_INLINE void display_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+Display_TypeDef* ST7796_Init(void) {
 
-uint8_t data[4];
-
-  write_cmd(0x2a);
-  data[0] = x0 >> 8; data[1] = x0 & 0xff;
-  data[2] = x1 >> 8; data[3] = x1 & 0xff;
-  write_data(data, 4);
-
-  write_cmd(0x2b);
-  data[0] = y0 >> 8; data[1] = y0 & 0xff;
-  data[2] = y1 >> 8; data[3] = y1 & 0xff;
-  write_data(data, 4);
-
-  write_cmd(0x2c);
-}
-
-
-
-
-// --------------------------------------------------------------------------
-
-__STATIC_INLINE void display_prepare_color(uint16_t color) {
-  for (uint32_t i = 0; i < PIX_BUF_SZ; i++) {
-    pixbuf[i] = color;
-  }
-}
-
-
-
-
-// --------------------------------------------------------------------------
-
-HAL_StatusTypeDef ST7796_Init(void) {
+  if (display_0.Lock == DISABLE) display_0.Lock = ENABLE;
 
   uint8_t initData[16];
 
@@ -147,7 +124,8 @@ HAL_StatusTypeDef ST7796_Init(void) {
 
   // optional sanity check
   if (dma_size != 2048) {
-    return (HAL_ERROR);
+    display_0.Lock = ENABLE;
+    return &display_0;
   }
 
   display_reset();
@@ -246,40 +224,78 @@ HAL_StatusTypeDef ST7796_Init(void) {
   initData[13] = 0x1b;
 	write_data(initData, 14);
 
-  // HAL_Delay(120);
-	
-	// write_cmd(0xf0);                  // Command Set control            
-  // initData[0] = 0x3c;               // - Disable extension command 2 partI
-	// write_data(initData, 1);    
-
-	// write_cmd(0xf0);                  // Command Set control                                 
-  // initData[0] = 0x69;               // - Disable extension command 2 partII
-	// write_data(initData, 1);    
-
-  // HAL_Delay(120);
-  
 	write_cmd(0x29);                  // Display on                                          	
   
   HAL_Delay(10);
 
-  return (ST7796_Fill(0x0000));
+  if (Display_Fill(&display_0, COLOR_BLACK) != HAL_OK) return &display_0;
+
+  display_0.Lock = DISABLE;
+  return &display_0;
 }
 
 
 
 // --------------------------------------------------------------------------
 
-HAL_StatusTypeDef ST7796_Fill(uint16_t color) {
-  display_set_window(0, 0, (DISPLAY_WIDTH - 1), (DISPLAY_HEIGHT - 1));
+HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef* dev, uint16_t c) {
 
-  display_prepare_color(color);
+  Display_SetWindow(dev, 0, 0, (dev->Width  - 1), (dev->Height - 1));
 
-  uint32_t total = DISPLAY_WIDTH * DISPLAY_HEIGHT * 2;
+  /* prepare color */
+  for (uint32_t i = 0; i < dev->PixBufSize; i++) {
+    dev->PixBuf[i] = c;
+  }
+
+  uint32_t total = dev->Width * dev->Height * 2;
+  uint32_t chunk = 0;
+  
   while (total) {
-    uint32_t chunk = (total > PIX_BUF_SZ) ? PIX_BUF_SZ : total;
+    chunk = (total > dev->PixBufSize) ? dev->PixBufSize : total;
     write_data_dma(pixbuf, chunk);
     total -= chunk;
   }
 
+  return (HAL_OK);
+}
+
+
+
+// --------------------------------------------------------------------------
+
+HAL_StatusTypeDef __attribute__((weak)) Display_SetWindow(Display_TypeDef* dev, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+
+uint8_t data[4];
+
+  write_cmd(0x2a);
+  data[0] = x0 >> 8; data[1] = x0 & 0xff;
+  data[2] = x1 >> 8; data[3] = x1 & 0xff;
+  write_data(data, 4);
+
+  write_cmd(0x2b);
+  data[0] = y0 >> 8; data[1] = y0 & 0xff;
+  data[2] = y1 >> 8; data[3] = y1 & 0xff;
+  write_data(data, 4);
+
+  write_cmd(0x2c);
+}
+
+
+
+
+
+
+// --------------------------------------------------------------------------
+
+HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* dev, uint16_t x0, uint16_t y0, uint16_t w, uint16_t h, uint16_t c) {
+
+  __NOP();
+  return (HAL_OK);
+}
+
+
+HAL_StatusTypeDef __attribute__((weak)) Display_DrawPixel(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t c) {
+
+  __NOP();
   return (HAL_OK);
 }

@@ -1,0 +1,59 @@
+/**
+  ******************************************************************************
+  * @file           : common.h
+  * @brief          : This file contains the common defines for the project.
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2017-2026 Askug Ltd.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+
+#ifndef __COMMON_H
+#define __COMMON_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#include "main.h"
+
+
+
+/**
+ * @brief   Display device type definition struct.
+ */
+typedef struct {
+  FunctionalState       Lock;
+  uint16_t              Model;
+  uint16_t              Width;
+  uint16_t              Height;
+  uint32_t*             Device;
+  uint16_t*             PixBuf;
+  uint16_t              PixBufSize;
+  HAL_StatusTypeDef     (*Callback)(uint32_t*);
+} Display_TypeDef;
+
+
+HAL_StatusTypeDef __attribute__((weak)) Display_SetWindow(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef*, uint16_t);
+HAL_StatusTypeDef __attribute__((weak)) DisplayFillRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
+HAL_StatusTypeDef __attribute__((weak)) DisplayDrawPixel(Display_TypeDef*, uint16_t, uint16_t, uint16_t);
+
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __COMMON_H */
+
+
