@@ -47,8 +47,6 @@ extern "C" {
 
 
 #define PIX_BUF_SZ        1024  // words (1024 pixels)
-#define DISPLAY_WIDTH     320
-#define DISPLAY_HEIGHT    480
 
 #define TFT_CS_GPIO_Port  GPIOA
 #define TFT_CS_Pin        GPIO_PIN_4

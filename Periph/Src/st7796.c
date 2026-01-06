@@ -100,16 +100,28 @@ __STATIC_INLINE void write_data_dma(Display_TypeDef* dev, uint16_t *data, uint32
 
 __STATIC_INLINE void display_set_window(Display_TypeDef* dev, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
 
-uint8_t data[4];
+  uint8_t data[4];
 
   write_cmd(dev, 0x2a);
-  data[0] = x0 >> 8; data[1] = x0 & 0xff;
-  data[2] = x1 >> 8; data[3] = x1 & 0xff;
+  #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
+    data[0] = x0 >> 8; data[1] = x0 & 0xff;
+    data[2] = x1 >> 8; data[3] = x1 & 0xff;
+  #endif
+  #if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
+    data[0] = x0 >> 8; data[1] = y0 & 0xff;
+    data[2] = x1 >> 8; data[3] = y1 & 0xff;
+  #endif
   write_data(dev, data, 4);
 
   write_cmd(dev, 0x2b);
-  data[0] = y0 >> 8; data[1] = y0 & 0xff;
-  data[2] = y1 >> 8; data[3] = y1 & 0xff;
+  #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
+    data[0] = y0 >> 8; data[1] = y0 & 0xff;
+    data[2] = y1 >> 8; data[3] = y1 & 0xff;
+  #endif
+  #if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
+    data[0] = y0 >> 8; data[1] = x0 & 0xff;
+    data[2] = y1 >> 8; data[3] = x1 & 0xff;
+  #endif
   write_data(dev, data, 4);
 
   write_cmd(dev, 0x2c);
@@ -128,8 +140,14 @@ Display_TypeDef* ST7796_Init(void) {
     .Device     = (uint32_t*)&hspi1,
     .PixBuf     = pixbuf,
     .PixBufSize = PIX_BUF_SZ,
-    .Width      = DISPLAY_WIDTH,
-    .Height     = DISPLAY_HEIGHT,
+    #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
+    .Width      = 320,
+    .Height     = 480,
+    #endif
+    #if (ORIENTATION == 0x80) || (ORIENTATION == 0x40)
+    .Width      = 480,
+    .Height     = 320,
+    #endif
   };
 
   Display_TypeDef* dev = &display_0;
@@ -291,24 +309,16 @@ HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef* d
 
 HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t c) {
 
-  uint16_t rw, rh;
-  #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
-    rw = w + x;
-    rh = h + y;
-    if (rw > dev->Width) return (HAL_ERROR);
-    if (rh > dev->Height) return (HAL_ERROR);
-    display_set_window(dev, x, y, (rw - 1), (rh - 1));
-  #endif
-  #if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
-    rw = w + x;
-    rh = h + y;
-    if (rw > dev->Width) return (HAL_ERROR);
-    if (rh > dev->Height) return (HAL_ERROR);
-    display_set_window(dev, y, x, (rh - 1), (rw - 1));
-  #endif
+  uint16_t rw = w + x;
+  uint16_t rh = h + y;
+  if (rw > dev->Width) return (HAL_ERROR);
+  if (rh > dev->Height) return (HAL_ERROR);
+  display_set_window(dev, x, y, (rw - 1), (rh - 1));
 
-  /* prepare color */
-  for (uint32_t i = 0; i < dev->PixBufSize; i++) {
+  /* prepare color & optimize buffer filler */
+  uint32_t pcnt = h * w;
+  uint32_t ccnt = (pcnt > dev->PixBufSize) ? dev->PixBufSize : pcnt; 
+  for (uint32_t i = 0; i < ccnt; i++) {
     dev->PixBuf[i] = c;
   }
 

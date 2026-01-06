@@ -47,7 +47,7 @@ void Display_Run(Display_TypeDef* dev) {
     step = tick + SIMPLE_PAUSE;
     
     // Display_Fill(dev, (uint16_t)(step & 0xffff));
-    Display_FillRectangle(dev, 300, 100, 20, 80, (uint16_t)(tick & 0xffff));
+    Display_FillRectangle(dev, 150, 100, 20, 40, (uint16_t)(tick & 0xffff));
   }
 }
 
