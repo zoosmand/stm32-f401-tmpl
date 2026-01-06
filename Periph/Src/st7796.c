@@ -108,8 +108,8 @@ __STATIC_INLINE void display_set_window(Display_TypeDef* dev, uint16_t x0, uint1
     data[2] = x1 >> 8; data[3] = x1 & 0xff;
   #endif
   #if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
-    data[0] = x0 >> 8; data[1] = y0 & 0xff;
-    data[2] = x1 >> 8; data[3] = y1 & 0xff;
+    data[0] = y0 >> 8; data[1] = y0 & 0xff;
+    data[2] = y1 >> 8; data[3] = y1 & 0xff;
   #endif
   write_data(dev, data, 4);
 
@@ -119,8 +119,8 @@ __STATIC_INLINE void display_set_window(Display_TypeDef* dev, uint16_t x0, uint1
     data[2] = y1 >> 8; data[3] = y1 & 0xff;
   #endif
   #if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
-    data[0] = y0 >> 8; data[1] = x0 & 0xff;
-    data[2] = y1 >> 8; data[3] = x1 & 0xff;
+    data[0] = x0 >> 8; data[1] = x0 & 0xff;
+    data[2] = x1 >> 8; data[3] = x1 & 0xff;
   #endif
   write_data(dev, data, 4);
 
@@ -329,9 +329,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* d
 // --------------------------------------------------------------------------
 
 HAL_StatusTypeDef __attribute__((weak)) Display_DrawPixel(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t c) {
-
-  __NOP();
-  return (HAL_OK);
+  return Display_FillRectangle(dev, x, y, 1, 1, c);
 }
 
 
@@ -351,19 +349,57 @@ HAL_StatusTypeDef __attribute__((weak)) Display_DrawHLine(Display_TypeDef* dev, 
 
 // --------------------------------------------------------------------------
 
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawCircle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t r, uint16_t b, uint16_t c) {
-  
-  __NOP();
+HAL_StatusTypeDef __attribute__((weak)) Display_DrawCircle(Display_TypeDef* dev, uint16_t x0, uint16_t y0, uint16_t r, uint16_t b, uint16_t c) {
+
+  int16_t x = 0;
+  int16_t y = r;
+  int16_t d = 1 - r;
+
+  while (x <= y) {
+    Display_DrawHLine(dev, (x0 + x - b), (y0 + y), b, b, c);
+    Display_DrawHLine(dev, (x0 + x - b), (y0 - y), b, b, c);
+    Display_DrawHLine(dev, (x0 + y - b), (y0 + x), b, b, c);
+    Display_DrawHLine(dev, (x0 + y - b), (y0 - x), b, b, c);
+
+    Display_DrawHLine(dev, (x0 - x - b), (y0 + y), b, b, c);
+    Display_DrawHLine(dev, (x0 - x - b), (y0 - y), b, b, c);
+    Display_DrawHLine(dev, (x0 - y - b), (y0 + x), b, b, c);
+    Display_DrawHLine(dev, (x0 - y - b), (y0 - x), b, b, c);
+
+    if (d < 0) {
+      d += 2 * x + 3;
+    } else {
+      d += 2 * (x - y) + 5;
+      y--;
+    }
+    x++;
+  }
   return (HAL_OK);
 }
 
 
-
 // --------------------------------------------------------------------------
 
-HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t r, uint16_t c) {
-  
-  __NOP();
+HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev, uint16_t x0, uint16_t y0, uint16_t r, uint16_t c) {
+  int16_t x = 0;
+  int16_t y = r;
+  int16_t d = 1 - r;
+
+  while (x <= y) {
+
+    Display_DrawHLine(dev, (x0 - x - 1), (y0 + y), (2 * x + 1), 1, c);
+    Display_DrawHLine(dev, (x0 - x - 1), (y0 - y), (2 * x + 1), 1, c);
+    Display_DrawHLine(dev, (x0 - y - 1), (y0 + x), (2 * y + 1), 1, c);
+    Display_DrawHLine(dev, (x0 - y - 1), (y0 - x), (2 * y + 1), 1, c);
+
+    if (d < 0) {
+      d += 2 * x + 3;
+    } else {
+      d += 2 * (x - y) + 5;
+      y--;
+    }
+    x++;
+  }
   return (HAL_OK);
 }
 
