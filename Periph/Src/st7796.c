@@ -274,7 +274,6 @@ Display_TypeDef* ST7796_Init(void) {
 // --------------------------------------------------------------------------
 
 HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef* dev, uint16_t c) {
-
   return Display_FillRectangle(dev, 0, 0, dev->Width, dev->Height, c);
 }
 
@@ -283,24 +282,15 @@ HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef* dev, uint1
 // --------------------------------------------------------------------------
 
 HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t b, uint16_t c) {
-  
-  display_set_window(dev, x, y, (w - x - 1), (h - y - 1));
+ 
+  HAL_StatusTypeDef status = HAL_OK;
 
-  /* prepare color */
-  for (uint32_t i = 0; i < dev->PixBufSize; i++) {
-    dev->PixBuf[i] = c;
-  }
+  if (Display_DrawVLine(dev, x, y, (w + b), b, c) != HAL_OK) status = HAL_ERROR;
+  if (Display_DrawVLine(dev, (x + h), y, (w + b), b, c) != HAL_OK) status = HAL_ERROR;
+  if (Display_DrawHLine(dev, x, y, h, b, c) != HAL_OK) status = HAL_ERROR;
+  if (Display_DrawHLine(dev, x, (y + w), h, b, c) != HAL_OK) status = HAL_ERROR;
 
-  uint32_t total = dev->Width * dev->Height * 2;
-  uint32_t chunk = 0;
-  
-  while (total) {
-    chunk = (total > dev->PixBufSize) ? dev->PixBufSize : total;
-    write_data_dma(dev, dev->PixBuf, chunk);
-    total -= chunk;
-  }
-
-  return (HAL_OK);
+  return (status);
 }
 
 
@@ -322,7 +312,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* d
     dev->PixBuf[i] = c;
   }
 
-  uint32_t total = dev->Width * dev->Height * 2;
+  uint32_t total = pcnt * 2;
   uint32_t chunk = 0;
   
   while (total) {
@@ -348,18 +338,14 @@ HAL_StatusTypeDef __attribute__((weak)) Display_DrawPixel(Display_TypeDef* dev, 
 // --------------------------------------------------------------------------
 
 HAL_StatusTypeDef __attribute__((weak)) Display_DrawVLine(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t l, uint16_t b, uint16_t c) {
-
-  __NOP();
-  return (HAL_OK);
+  return Display_FillRectangle(dev, x, y, b, l, c);
 }
 
 
 // --------------------------------------------------------------------------
 
 HAL_StatusTypeDef __attribute__((weak)) Display_DrawHLine(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t l, uint16_t b, uint16_t c) {
-
-  __NOP();
-  return (HAL_OK);
+  return Display_FillRectangle(dev, x, y, l, b, c);
 }
 
 

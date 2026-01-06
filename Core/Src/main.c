@@ -105,6 +105,8 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  srand(time(NULL));
+
   Display_TypeDef* display_0 = ST7796_Init();
 
   /* USER CODE END 2 */

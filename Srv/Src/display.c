@@ -40,6 +40,7 @@ void Display_Run(Display_TypeDef* dev) {
   if (dev->Lock == ENABLE) return;
   
   uint32_t tick = HAL_GetTick();
+  uint16_t color;
   
   if (step >= tick) {
     return;
@@ -47,7 +48,13 @@ void Display_Run(Display_TypeDef* dev) {
     step = tick + SIMPLE_PAUSE;
     
     // Display_Fill(dev, (uint16_t)(step & 0xffff));
-    Display_FillRectangle(dev, 150, 100, 20, 40, (uint16_t)(tick & 0xffff));
+    // Display_FillRectangle(dev, 150, 100, 20, 40, (uint16_t)(tick & 0xffff));
+    color = (uint16_t)(rand() & 0xffff);
+
+    // Display_DrawVLine(dev, 100, 150, 100, 2, color);
+    // Display_DrawHLine(dev, 100, 150, 50, 2, color);
+
+    Display_DrawRectangle(dev, 100, 150, 50, 80, 4, color);
   }
 }
 
