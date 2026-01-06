@@ -163,7 +163,7 @@ Display_TypeDef* ST7796_Init(void) {
   write_data(dev, initData, 1);    
 	
 	write_cmd(dev, 0x36);             // Memory Data Access Control MX, MY, RGB mode                                    
-  initData[0] = 0xc0;               // - Default orientation, RGB
+  initData[0] = ORIENTATION;        // - Orientation, RGB
   // initData[0] = 0x48;            // - X-Mirror, Top-Left to right-Buttom, RGB
 	write_data(dev, initData, 1);      
 	
@@ -257,7 +257,16 @@ Display_TypeDef* ST7796_Init(void) {
 
 HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef* dev, uint16_t c) {
 
-  display_set_window(dev, 0, 0, (dev->Width  - 1), (dev->Height - 1));
+  return Display_FillRectangle(dev, 0, 0, dev->Width, dev->Height, c);
+}
+
+
+
+// --------------------------------------------------------------------------
+
+HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t b, uint16_t c) {
+  
+  display_set_window(dev, x, y, (w - x - 1), (h - y - 1));
 
   /* prepare color */
   for (uint32_t i = 0; i < dev->PixBufSize; i++) {
@@ -280,19 +289,38 @@ HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef* dev, uint1
 
 // --------------------------------------------------------------------------
 
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t b, uint16_t c) {
-  
-  __NOP();
-  return (HAL_OK);
-}
-
-
-
-// --------------------------------------------------------------------------
-
 HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t c) {
+
+  uint16_t rw, rh;
+  #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
+    rw = w + x;
+    rh = h + y;
+    if (rw > dev->Width) return (HAL_ERROR);
+    if (rh > dev->Height) return (HAL_ERROR);
+    display_set_window(dev, x, y, (rw - 1), (rh - 1));
+  #endif
+  #if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
+    rw = w + x;
+    rh = h + y;
+    if (rw > dev->Width) return (HAL_ERROR);
+    if (rh > dev->Height) return (HAL_ERROR);
+    display_set_window(dev, y, x, (rh - 1), (rw - 1));
+  #endif
+
+  /* prepare color */
+  for (uint32_t i = 0; i < dev->PixBufSize; i++) {
+    dev->PixBuf[i] = c;
+  }
+
+  uint32_t total = dev->Width * dev->Height * 2;
+  uint32_t chunk = 0;
   
-  __NOP();
+  while (total) {
+    chunk = (total > dev->PixBufSize) ? dev->PixBufSize : total;
+    write_data_dma(dev, dev->PixBuf, chunk);
+    total -= chunk;
+  }
+
   return (HAL_OK);
 }
 

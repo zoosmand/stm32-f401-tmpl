@@ -46,8 +46,8 @@ void Display_Run(Display_TypeDef* dev) {
   } else {
     step = tick + SIMPLE_PAUSE;
     
-    Display_Fill(dev, (uint16_t)(step & 0xffff));
-    Display_FillRectangle(dev, 40, 120, 10, 65, COLOR_LIME);
+    // Display_Fill(dev, (uint16_t)(step & 0xffff));
+    Display_FillRectangle(dev, 300, 100, 20, 80, (uint16_t)(tick & 0xffff));
   }
 }
 

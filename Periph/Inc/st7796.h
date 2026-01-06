@@ -29,6 +29,12 @@ extern "C" {
 
 #include "main.h"
 
+// 0x00 or 0xc0 - vertical
+// 0x40 or 0x80 - horizontal
+// 0x00 - RGB
+// 0x08 - BRG
+#define ORIENTATION       (0x80 | 0x00)
+
 
 /* Define colors*/
 #define COLOR_BLACK       (uint16_t)0x0000
