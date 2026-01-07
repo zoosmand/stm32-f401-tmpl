@@ -38,7 +38,16 @@ static __IO uint32_t step = 0;
 void Display_Run(Display_TypeDef* dev) {
 
   if (dev->Lock == ENABLE) return;
-  
+
+  Font_TypeDef font = {
+    .Bgcolor  = COLOR_BLUE,
+    .Color    = COLOR_LIME,
+    .Font     = (uint32_t*)&font_dot_10x14,
+    .Height   = 16,
+    .Width    = 12,
+  };
+
+
   uint32_t tick = HAL_GetTick();
   uint16_t color;
   // static uint16_t r_step = 280;
@@ -54,10 +63,10 @@ void Display_Run(Display_TypeDef* dev) {
     // Display_FillRectangle(dev, 150, 100, 20, 40, (uint16_t)(tick & 0xffff));
     color = (uint16_t)(rand() & 0xffff);
 
-    Display_DrawVLine(dev, 100, 0, 300, 2, color);
-    Display_DrawHLine(dev, 0, 150, 460, 2, color);
+    // Display_DrawVLine(dev, 100, 0, 300, 2, color);
+    // Display_DrawHLine(dev, 0, 150, 460, 2, color);
 
-    Display_DrawRectangle(dev, 120, 160, 50, 80, 4, color);
+    // Display_DrawRectangle(dev, 120, 160, 50, 80, 4, color);
 
     // Display_DrawCircle(dev, pr_step, 230, 30, 2, COLOR_BLACK);
     // pr_step = r_step;
@@ -80,8 +89,11 @@ void Display_Run(Display_TypeDef* dev) {
     // }
     
     
-    Display_DrawCircle(dev, 280, 230, 30, 2, color);
-    Display_FillCircle(dev, 220, 115, 30, color);
+    // Display_DrawCircle(dev, 280, 230, 10, 3, color);
+    // Display_FillCircle(dev, 220, 115, 30, color);
+
+
+    Display_PrintSymbol(dev, 140, 80, &font, 'N');
   }
 }
 

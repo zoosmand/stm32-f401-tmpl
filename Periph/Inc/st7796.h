@@ -76,10 +76,11 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef*, 
 HAL_StatusTypeDef __attribute__((weak)) Display_DrawPixel(Display_TypeDef*, uint16_t, uint16_t, uint16_t);
 HAL_StatusTypeDef __attribute__((weak)) Display_DrawVLine(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
 HAL_StatusTypeDef __attribute__((weak)) Display_DrawHLine(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawCircle(Display_TypeDef* dev, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev, uint16_t, uint16_t, uint16_t, uint16_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_DrawCircle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t);
 
 
+HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef*, uint16_t, uint16_t, Font_TypeDef*, char);
 
 #ifdef __cplusplus
 }

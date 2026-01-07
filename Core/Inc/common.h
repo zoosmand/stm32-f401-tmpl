@@ -42,7 +42,13 @@ typedef struct {
 } Display_TypeDef;
 
 
-
+typedef struct {
+  uint8_t               Width;
+  uint8_t               Height;
+  uint16_t              Color;
+  uint16_t              Bgcolor;
+  uint32_t*             Font;
+} Font_TypeDef;
 
 
 #ifdef __cplusplus

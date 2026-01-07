@@ -405,3 +405,56 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev,
 
 
 
+// --------------------------------------------------------------------------
+
+HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef* dev, uint16_t x, uint16_t y, Font_TypeDef* f, char s) {
+
+  if ((s > 126) || (s < 32)) {
+    if (s == 176) s = 95;
+    else return (HAL_ERROR);
+  } else {
+    s -= 32;
+  }
+
+  uint16_t rw = f->Width + x;
+  uint16_t rh = f->Height + y;
+  if (rw > dev->Width) return (HAL_ERROR);
+  if (rh > dev->Height) return (HAL_ERROR);
+  display_set_window(dev, x, y, (rw - 1), (rh - 1));
+
+  /* prepare color & optimize buffer filler */
+  uint32_t pcnt = f->Height * f->Width;
+  uint32_t ccnt = (pcnt > dev->PixBufSize) ? dev->PixBufSize : pcnt;
+
+  uint32_t index = 0;
+  uint32_t index2 = 0;
+  
+  font_dot_10x14_t* dd = (font_dot_10x14_t*)f->Font;
+
+  uint8_t* ch = (uint8_t*)dd[s];
+  static uint8_t fb = 0;
+
+  for (uint32_t i = 0; i < ccnt; (i += 8)) {
+    fb = ch[index2++];
+    for (uint8_t k = 0; k < 8; k++) {
+      if ((fb >> k) & 0x01) {
+        dev->PixBuf[index] = f->Color;
+      } else {
+        dev->PixBuf[index] = f->Bgcolor;
+      }
+      index++;
+    }
+  }
+
+
+  uint32_t total = pcnt * 2;
+  uint32_t chunk = 0;
+  
+  while (total) {
+    chunk = (total > dev->PixBufSize) ? dev->PixBufSize : total;
+    write_data_dma(dev, dev->PixBuf, chunk);
+    total -= chunk;
+  }
+
+  return (HAL_OK);
+}
