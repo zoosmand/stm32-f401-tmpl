@@ -40,11 +40,12 @@ void Display_Run(Display_TypeDef* dev) {
   if (dev->Lock == ENABLE) return;
 
   Font_TypeDef font = {
-    .Bgcolor  = COLOR_BLUE,
-    .Color    = COLOR_LIME,
-    .Font     = (uint32_t*)&font_dot_10x14,
-    .Height   = 16,
-    .Width    = 12,
+    .Bgcolor      = COLOR_BLUE,
+    .Color        = COLOR_LIME,
+    .Font         = (uint8_t*)&font_dot_15x21,
+    .Height       = 24,
+    .Width        = 18,
+    .BytesPerGlif = 54,
   };
 
 
@@ -93,7 +94,8 @@ void Display_Run(Display_TypeDef* dev) {
     // Display_FillCircle(dev, 220, 115, 30, color);
 
 
-    Display_PrintSymbol(dev, 140, 80, &font, 'N');
+    // Display_PrintSymbol(dev, 140, 80, &font, '3');
+    Display_PrintString(dev, 140, 80, &font, "CoroideVO!\n");
   }
 }
 

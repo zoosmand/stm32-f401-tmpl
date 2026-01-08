@@ -32,7 +32,7 @@ typedef uint8_t font_dot_20x28_t[96];
 extern const font_dot_5x7_t font_dot_5x7[96];
 extern const font_dot_10x14_t font_dot_10x14[96];
 extern const font_dot_15x21_t font_dot_15x21[96];
-extern const font_dot_20x28_t font_dot_10x28[96];
+extern const font_dot_20x28_t font_dot_20x28[96];
 
 
 

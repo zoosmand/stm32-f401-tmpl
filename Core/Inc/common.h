@@ -47,7 +47,8 @@ typedef struct {
   uint8_t               Height;
   uint16_t              Color;
   uint16_t              Bgcolor;
-  uint32_t*             Font;
+  uint16_t              BytesPerGlif;
+  uint8_t*              Font;
 } Font_TypeDef;
 
 

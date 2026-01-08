@@ -81,6 +81,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef*, uin
 
 
 HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef*, uint16_t, uint16_t, Font_TypeDef*, char);
+HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef*, uint16_t, uint16_t, Font_TypeDef*, const char*);
 
 #ifdef __cplusplus
 }
