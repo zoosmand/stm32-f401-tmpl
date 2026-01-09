@@ -499,48 +499,64 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
   if (!str || !f) return HAL_ERROR;
 
   uint16_t lc = 0;
-  uint32_t buf_idx = 0;
+  uint32_t x_shift = x;
+  
+  while (str[lc++] != '\n') {
+    if (lc > 64) break;
+  }
+  
+  uint32_t pc = 1024 / (f->Width * f->Height);
+  uint32_t pxc = f->Width * f->Height * pc;
+  
+  for (uint8_t i = 1; i <= (lc / pc); i++) {
+    
+    display_set_window(dev, x_shift, y, (x_shift + (pc * f->Width) - 1), (y + f->Height - 1));
+    x_shift += pc * f->Width;
+    
+    // for (uint32_t k = 0; k < pxc; k++) {
+      //   dev->PixBuf[k] = f->Color;
+      // }
+      
+      
+      // for (uint8_t v = 0; v < f->Height; v++) {
+        //   for (uint16_t j = 0; j < pc; j++) {
+          //     const uint8_t *glyph = f->Font + (str[j*i] * f->BytesPerGlif);
+          
+          //     for (uint8_t k = 0; k < f->Width; k++) {
+            //       uint8_t bits = glyph[k + (v * f->Height)];
+            //       for (uint8_t bit = 0; bit < 8; bit++) {
+              //         if (buf_idx >= 1024) break;
+              //         dev->PixBuf[buf_idx++] = (bits & 0x01) ? f->Color : f->Bgcolor;
+              //         bits >>= 1;
+              //       }
+              //     }
+              //   }
+              // }
+              
+    uint32_t buf_idx = 0;
 
-  while (str[lc++] != '\n') {};
+    for (uint16_t j = 0; j < pc; j++) {
+      const uint8_t *glyph = f->Font + (str[(j + ((i - 1) * pc))] * f->BytesPerGlif);
+
+      for (uint8_t h = 0; h < f->Height; h++) {
+        for (uint8_t w = 0; w < f->Width; w++) {
+          uint8_t bits = glyph[w];
+          for (uint8_t bit = 0; bit < 8; bit++) {
+            dev->PixBuf[buf_idx++] = (bits & 0x01) ? f->Color : f->Bgcolor;
+            bits >>= 1;
+          }
+        }
+        buf_idx += pc * f->Width;
+      }
+      // buf_idx = i * f->Width;
+      __NOP();
+
+    }
+  
 
 
-  display_set_window(dev, x, y, (x + (lc * f->Width - 1)), (y + f->Height));
-  // display_set_window(dev, x, y, 300, 100);
-
-
-  for (uint32_t i = 0; i < 1024; i++) {
-    dev->PixBuf[i] = f->Color;
+    write_data_dma(dev, dev->PixBuf, pxc * 2);
   }
 
-  write_data_dma(dev, dev->PixBuf, 2048);
-  write_data_dma(dev, dev->PixBuf, 2048);
-  write_data_dma(dev, dev->PixBuf, 2048);
-  write_data_dma(dev, dev->PixBuf, 2048);
-  write_data_dma(dev, dev->PixBuf, 2048);
-
-
-
-  // for (uint8_t i = 0; i < f->Height; i++) {
-  //   for (uint16_t j = 0; j < lc; j++) {
-  //     const uint8_t *glyph = f->Font + (str[j] * f->BytesPerGlif);
-
-  //     for (uint8_t k = 0; k < f->Width; k++) {
-  //       uint8_t bits = glyph[k + (i * f->Height)];
-  //       for (uint8_t bit = 0; bit < 8; bit++) {
-  //         if (buf_idx >= 1024) break;
-  //         dev->PixBuf[buf_idx++] = (bits & 0x01) ? f->Color : f->Bgcolor;
-  //         bits >>= 1;
-  //       }
-  //       if (buf_idx >= 1024) break;
-  //     }
-  //   }
-  //   if (buf_idx >= 1024) break;
-  // }
-
-  // if (buf_idx) {
-  //     write_data_dma(dev, dev->PixBuf, buf_idx * 2);
-  // }
-
   return HAL_OK;
-
 }
