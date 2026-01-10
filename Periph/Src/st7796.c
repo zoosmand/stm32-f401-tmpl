@@ -407,7 +407,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev,
 
 // --------------------------------------------------------------------------
 
-__STATIC_INLINE uint32_t prepare_pixel(Display_TypeDef* dev, Font_TypeDef* f, char ch, uint32_t tp, uint32_t bi) {
+__STATIC_INLINE uint32_t prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, char ch, uint32_t tp, uint32_t bi) {
 
   // shift the glig index
   if ((ch < 32) || (ch > 126)) {
@@ -447,7 +447,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef* dev
 
   uint32_t buf_idx = 0;
 
-  buf_idx = prepare_pixel(dev, f, ch, total_pixels, buf_idx);
+  buf_idx = prepare_glyph(dev, f, ch, total_pixels, buf_idx);
 
   if (buf_idx) {
       write_data_dma(dev, dev->PixBuf, buf_idx * 2);
@@ -486,7 +486,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
 
     buf_idx = 0;
     for (uint8_t j = 0; j < chunk; j++) {
-      buf_idx = prepare_pixel(dev, f, str[(j + (chunk * (i - 1)))], total_pixels, buf_idx);
+      buf_idx = prepare_glyph(dev, f, str[(j + (chunk * (i - 1)))], total_pixels, buf_idx);
     }
 
     write_data_dma(dev, dev->PixBuf, total_pixels * 2);
@@ -502,7 +502,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
     total_pixels = f->Width * f->Height * str_rest;
 
     for (uint8_t j = 0; j < str_rest; j++) {
-      buf_idx = prepare_pixel(dev, f, str[char_count - str_rest + j], total_pixels, buf_idx);
+      buf_idx = prepare_glyph(dev, f, str[char_count - str_rest + j], total_pixels, buf_idx);
     }
     write_data_dma(dev, dev->PixBuf, total_pixels * 2);
   }
