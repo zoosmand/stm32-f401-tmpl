@@ -93,9 +93,11 @@ void Display_Run(Display_TypeDef* dev) {
     // Display_DrawCircle(dev, 280, 230, 10, 3, color);
     // Display_FillCircle(dev, 220, 115, 30, color);
 
+    font.Color = color;
+
 
     // Display_PrintSymbol(dev, 140, 80, &font, '3');
-    Display_PrintString(dev, 140, 80, &font, "CoroideVO!\n");
+    Display_PrintString(dev, 140, 80, &font, "CoroideVO!8ka\n");
   }
 }
 

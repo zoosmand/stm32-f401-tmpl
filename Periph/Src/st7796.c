@@ -405,28 +405,18 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev,
 
 
 
-// --------------------------------------------------------------------------
+__STATIC_INLINE uint32_t prepare_pixel(Display_TypeDef* dev, Font_TypeDef* f, char ch, uint32_t tp, uint32_t bi) {
 
-HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef* dev, uint16_t x, uint16_t y, Font_TypeDef* f, char s) {
-
-  if ((s < 32) || (s > 126)) {
-      if (s == 176) s = 95;
-      else return (HAL_ERROR);
-  } else {
-      s -= 32;
+  // shift the glig index
+  if ((ch < 32) || (ch > 126)) {
+    if (ch == 176) ch = 95;
+    else ch = 32;
   }
+  ch -= 32;
 
-  uint16_t rw = x + f->Width;
-  uint16_t rh = y + f->Height;
-  if (rw > dev->Width || rh > dev->Height) return (HAL_ERROR);
-
-  display_set_window(dev, x, y, rw - 1, rh - 1);
-
-  const uint8_t *glyph = f->Font + (s * f->BytesPerGlif);
-  const uint32_t total_pixels = f->Width * f->Height;
+  const uint8_t *glyph = f->Font + (ch * f->BytesPerGlif);
 
   uint32_t pixel_count = 0;
-  uint32_t buf_idx = 0;
 
   for (uint32_t byte = 0; byte < f->BytesPerGlif; byte++) {
 
@@ -434,13 +424,31 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef* dev
 
     for (uint8_t bit = 0; bit < 8; bit++) {
 
-      if (pixel_count >= total_pixels) break;
+      if (pixel_count >= tp) break;
 
-      dev->PixBuf[buf_idx++] = (bits & 0x01) ? f->Color : f->Bgcolor;
+      dev->PixBuf[bi++] = (bits & 0x01) ? f->Color : f->Bgcolor;
       bits >>= 1;
       pixel_count++;
     }
   }
+  return bi;
+}
+
+
+// --------------------------------------------------------------------------
+
+HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef* dev, uint16_t x, uint16_t y, Font_TypeDef* f, char ch) {
+
+  uint16_t rw = x + f->Width;
+  uint16_t rh = y + f->Height;
+  if (rw > dev->Width || rh > dev->Height) return (HAL_ERROR);
+
+  display_set_window(dev, x, y, rw - 1, rh - 1);
+  const uint32_t total_pixels = f->Width * f->Height;
+
+  uint32_t buf_idx = 0;
+
+  buf_idx = prepare_pixel(dev, f, ch, total_pixels, buf_idx);
 
   if (buf_idx) {
       write_data_dma(dev, dev->PixBuf, buf_idx * 2);
@@ -457,49 +465,45 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
 
   if (!str || !f) return HAL_ERROR;
 
-  static uint16_t lc = 0;
-  uint32_t x_shift = x;
-  static uint32_t buf_idx = 0;
-  
-  while (str[lc++] != '\n') {
-    if (lc > 64) break;
-  }
-  
-  uint32_t pc = PIX_BUF_SZ / (f->Width * f->Height);
-  uint32_t pxc = f->Width * f->Height * pc;
-  const uint32_t total_pixels = f->Width * f->Height;
-  
-  for (uint8_t i = 1; i <= (lc / pc); i++) {
+  uint16_t char_count = 0;
+  uint16_t x_shift = x;
+  uint32_t buf_idx = 0;
 
-    display_set_window(dev, x_shift, y, (x_shift + (pc * f->Width) - 1), (y + f->Height - 1));
-    x_shift += pc * f->Width;
+  while (str[char_count++] != '\n') {
+    if (char_count > 64) break;
+  }
+
+  char_count--;
+  
+  uint32_t chunk = PIX_BUF_SZ / (f->Width * f->Height);
+  uint32_t total_pixels = f->Width * f->Height * chunk;
+  
+  for (uint8_t i = 1; i <= (char_count / chunk); i++) {
+
+    display_set_window(dev, x_shift, y, (x_shift + (chunk * f->Width) - 1), (y + f->Height - 1));
+    x_shift += chunk * f->Width;
 
     buf_idx = 0;
-    for (uint8_t j = 0; j < pc; j++) {
-
-      uint8_t s = str[(j + (pc * (i - 1)))];
-
-      if ((s < 32) || (s > 126)) {
-          if (s == 176) s = 95;
-          else return (HAL_ERROR);
-      } else {
-          s -= 32;
-      }
-      
-      const uint8_t *glyph = f->Font + (s * f->BytesPerGlif);
-        
-      for (uint32_t byte = 0; byte < f->BytesPerGlif; byte++) {
-
-        uint8_t bits = glyph[byte];
-
-        for (uint8_t bit = 0; bit < 8; bit++) {
-          dev->PixBuf[buf_idx++] = (bits & 0x01) ? f->Color : f->Bgcolor;
-          bits >>= 1;
-        }
-      }
+    for (uint8_t j = 0; j < chunk; j++) {
+      buf_idx = prepare_pixel(dev, f, str[(j + (chunk * (i - 1)))], total_pixels, buf_idx);
     }
 
-    write_data_dma(dev, dev->PixBuf, pxc * 2);
+    write_data_dma(dev, dev->PixBuf, total_pixels * 2);
+  }
+
+  // print the rest of the string
+  uint16_t str_rest = char_count % chunk;
+  if (str_rest) {
+
+    display_set_window(dev, x_shift, y, (x_shift + (str_rest * f->Width) - 1), (y + f->Height - 1));
+
+    buf_idx = 0;
+    total_pixels = f->Width * f->Height * str_rest;
+
+    for (uint8_t j = 0; j < str_rest; j++) {
+      buf_idx = prepare_pixel(dev, f, str[char_count - str_rest + j], total_pixels, buf_idx);
+    }
+    write_data_dma(dev, dev->PixBuf, total_pixels * 2);
   }
 
   return HAL_OK;

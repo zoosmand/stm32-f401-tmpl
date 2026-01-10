@@ -46,7 +46,7 @@ extern "C" {
 #define COLOR_LIME        (uint16_t)(COLOR_GREEN | COLOR_RED)
 
 
-#define PIX_BUF_SZ        4096  // words (1024 pixels)
+#define PIX_BUF_SZ        2048U  // words (1024 pixels)
 
 #define TFT_CS_GPIO_Port  GPIOA
 #define TFT_CS_Pin        GPIO_PIN_4
