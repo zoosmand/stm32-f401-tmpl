@@ -405,6 +405,8 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev,
 
 
 
+// --------------------------------------------------------------------------
+
 __STATIC_INLINE uint32_t prepare_pixel(Display_TypeDef* dev, Font_TypeDef* f, char ch, uint32_t tp, uint32_t bi) {
 
   // shift the glig index
@@ -419,13 +421,10 @@ __STATIC_INLINE uint32_t prepare_pixel(Display_TypeDef* dev, Font_TypeDef* f, ch
   uint32_t pixel_count = 0;
 
   for (uint32_t byte = 0; byte < f->BytesPerGlif; byte++) {
-
     uint8_t bits = glyph[byte];
 
     for (uint8_t bit = 0; bit < 8; bit++) {
-
       if (pixel_count >= tp) break;
-
       dev->PixBuf[bi++] = (bits & 0x01) ? f->Color : f->Bgcolor;
       bits >>= 1;
       pixel_count++;
@@ -482,6 +481,8 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
 
     display_set_window(dev, x_shift, y, (x_shift + (chunk * f->Width) - 1), (y + f->Height - 1));
     x_shift += chunk * f->Width;
+
+    if (x_shift > dev->Width) return (HAL_OK);
 
     buf_idx = 0;
     for (uint8_t j = 0; j < chunk; j++) {

@@ -42,10 +42,19 @@ void Display_Run(Display_TypeDef* dev) {
   Font_TypeDef font = {
     .Bgcolor      = COLOR_BLUE,
     .Color        = COLOR_LIME,
-    .Font         = (uint8_t*)&font_dot_15x21,
-    .Height       = 24,
-    .Width        = 18,
-    .BytesPerGlif = 54,
+    .Font         = (uint8_t*)&font_dot_20x28,
+    .Height       = 32,
+    .Width        = 24,
+    .BytesPerGlif = 96,
+  };
+
+  Font_TypeDef font2 = {
+    .Bgcolor      = COLOR_BLUE,
+    .Color        = COLOR_LIME,
+    .Font         = (uint8_t*)&font_dot_5x7,
+    .Height       = 8,
+    .Width        = 6,
+    .BytesPerGlif = 6,
   };
 
 
@@ -64,8 +73,8 @@ void Display_Run(Display_TypeDef* dev) {
     // Display_FillRectangle(dev, 150, 100, 20, 40, (uint16_t)(tick & 0xffff));
     color = (uint16_t)(rand() & 0xffff);
 
-    // Display_DrawVLine(dev, 100, 0, 300, 2, color);
-    // Display_DrawHLine(dev, 0, 150, 460, 2, color);
+    Display_DrawVLine(dev, 100, 0, 320, 2, COLOR_WHITE);
+    Display_DrawHLine(dev, 0, 150, 480, 2, COLOR_WHITE);
 
     // Display_DrawRectangle(dev, 120, 160, 50, 80, 4, color);
 
@@ -94,10 +103,14 @@ void Display_Run(Display_TypeDef* dev) {
     // Display_FillCircle(dev, 220, 115, 30, color);
 
     font.Color = color;
+    font.Bgcolor = ~color;
 
 
     // Display_PrintSymbol(dev, 140, 80, &font, '3');
-    Display_PrintString(dev, 140, 80, &font, "CoroideVO!8ka\n");
+    Display_PrintString(dev, 40, 180, &font, "CoroideVO!86728543\n");
+    
+    Display_PrintString(dev, 40, 86, &font2, "1234567890123456789012345678901234567890123456789012345678901234567890\n");
+
   }
 }
 
