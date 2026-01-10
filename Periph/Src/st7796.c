@@ -159,7 +159,7 @@ Display_TypeDef* ST7796_Init(void) {
   size_t dma_size = (size_t)((uintptr_t)&__dma_buffer_end__ - (uintptr_t)&__dma_buffer_start__);
 
   // optional sanity check
-  if (dma_size != 2048) return dev;
+  if (dma_size != (2 * PIX_BUF_SZ)) return dev;
 
   // initialization beginning
   display_reset();
@@ -450,110 +450,54 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef* dev
 }
 
 
+
+// --------------------------------------------------------------------------
+
 HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev, uint16_t x, uint16_t y, Font_TypeDef *f, const char *str) {
-    // if (!str || !f) return HAL_ERROR;
-
-    // uint16_t cx = x;
-    // uint16_t cy = y;
-    // HAL_StatusTypeDef status = HAL_ERROR;
-
-    // const uint16_t fw = f->Width;
-    // const uint16_t fh = f->Height;
-
-    // while (*str) {
-
-    //     char c = *str++;
-
-    //     // Handle newline
-    //     if (c == '\n') {
-    //         cx = x;
-    //         cy += fh;
-    //         if (cy + fh > dev->Height) break;
-    //         continue;
-    //     }
-
-    //     // Ignore carriage return
-    //     if (c == '\r') {
-    //         continue;
-    //     }
-
-    //     // Auto-wrap
-    //     if (cx + fw > dev->Width) {
-    //         cx = x;
-    //         cy += fh;
-    //         if (cy + fh > dev->Height) break;
-    //     }
-
-    //     // Draw character
-    //     if (Display_PrintSymbol(dev, cx, cy, f, c) == HAL_OK) {
-    //         status = HAL_OK;
-    //     }
-
-    //     cx += fw;
-    // }
-
-    // return status;
-
-
 
   if (!str || !f) return HAL_ERROR;
 
-  uint16_t lc = 0;
+  static uint16_t lc = 0;
   uint32_t x_shift = x;
+  static uint32_t buf_idx = 0;
   
   while (str[lc++] != '\n') {
     if (lc > 64) break;
   }
   
-  uint32_t pc = 1024 / (f->Width * f->Height);
+  uint32_t pc = PIX_BUF_SZ / (f->Width * f->Height);
   uint32_t pxc = f->Width * f->Height * pc;
+  const uint32_t total_pixels = f->Width * f->Height;
   
   for (uint8_t i = 1; i <= (lc / pc); i++) {
-    
+
     display_set_window(dev, x_shift, y, (x_shift + (pc * f->Width) - 1), (y + f->Height - 1));
     x_shift += pc * f->Width;
-    
-    // for (uint32_t k = 0; k < pxc; k++) {
-      //   dev->PixBuf[k] = f->Color;
-      // }
-      
-      
-      // for (uint8_t v = 0; v < f->Height; v++) {
-        //   for (uint16_t j = 0; j < pc; j++) {
-          //     const uint8_t *glyph = f->Font + (str[j*i] * f->BytesPerGlif);
-          
-          //     for (uint8_t k = 0; k < f->Width; k++) {
-            //       uint8_t bits = glyph[k + (v * f->Height)];
-            //       for (uint8_t bit = 0; bit < 8; bit++) {
-              //         if (buf_idx >= 1024) break;
-              //         dev->PixBuf[buf_idx++] = (bits & 0x01) ? f->Color : f->Bgcolor;
-              //         bits >>= 1;
-              //       }
-              //     }
-              //   }
-              // }
-              
-    uint32_t buf_idx = 0;
 
-    for (uint16_t j = 0; j < pc; j++) {
-      const uint8_t *glyph = f->Font + (str[(j + ((i - 1) * pc))] * f->BytesPerGlif);
+    buf_idx = 0;
+    for (uint8_t j = 0; j < pc; j++) {
 
-      for (uint8_t h = 0; h < f->Height; h++) {
-        for (uint8_t w = 0; w < f->Width; w++) {
-          uint8_t bits = glyph[w];
-          for (uint8_t bit = 0; bit < 8; bit++) {
-            dev->PixBuf[buf_idx++] = (bits & 0x01) ? f->Color : f->Bgcolor;
-            bits >>= 1;
-          }
-        }
-        buf_idx += pc * f->Width;
+      uint8_t s = str[(j + (pc * (i - 1)))];
+
+      if ((s < 32) || (s > 126)) {
+          if (s == 176) s = 95;
+          else return (HAL_ERROR);
+      } else {
+          s -= 32;
       }
-      // buf_idx = i * f->Width;
-      __NOP();
+      
+      const uint8_t *glyph = f->Font + (s * f->BytesPerGlif);
+        
+      for (uint32_t byte = 0; byte < f->BytesPerGlif; byte++) {
 
+        uint8_t bits = glyph[byte];
+
+        for (uint8_t bit = 0; bit < 8; bit++) {
+          dev->PixBuf[buf_idx++] = (bits & 0x01) ? f->Color : f->Bgcolor;
+          bits >>= 1;
+        }
+      }
     }
-  
-
 
     write_data_dma(dev, dev->PixBuf, pxc * 2);
   }
