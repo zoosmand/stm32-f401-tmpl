@@ -52,6 +52,23 @@ typedef struct {
 } Font_TypeDef;
 
 
+typedef struct {
+  uint8_t  touches;
+  uint16_t x;
+  uint16_t y;
+  uint8_t  event;   // 0=down, 1=up, 2=contact
+} TouchState_TypeDef;
+
+typedef enum {
+  TOUCH_IDLE,
+  TOUCH_DOWN,
+  TOUCH_HOLD,
+  TOUCH_UP
+} TouchPhase_t;
+
+
+
+
 #ifdef __cplusplus
 }
 #endif

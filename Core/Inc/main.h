@@ -41,6 +41,7 @@ extern "C" {
 #include "fonts.h"
 #include "common.h"
 #include "st7796.h"
+#include "ft6336u.h"
 #include "display.h"
 /* USER CODE END Includes */
 
