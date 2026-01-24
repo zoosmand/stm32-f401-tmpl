@@ -37,6 +37,14 @@ extern "C" {
 // | VDD         | 3.3 V                             |
 // | Pullups     | Required on SDA/SCL               |
 
+#define FT6336_ADDR (0x38 << 1)
+
+#define TC_RST_GPIO_Port  GPIOB
+#define TC_RST_Pin        GPIO_PIN_5
+
+#define TC_INT_GPIO_Port  GPIOB
+#define TC_INT_Pin        GPIO_PIN_9
+
 
 // Register	Addr	Size	Meaning
 #define TD_STATUS	0x02	// 1	Number of touch points (0–2)
@@ -51,7 +59,7 @@ extern "C" {
 extern I2C_HandleTypeDef hi2c1;
 
 
-HAL_StatusTypeDef TC_Init(I2C_HandleTypeDef *hi2c);
+TouchScreen_TypeDef* FT6336U_Init(I2C_HandleTypeDef *hi2c);
 HAL_StatusTypeDef TC_Read(TouchState_TypeDef *ts);
 
 

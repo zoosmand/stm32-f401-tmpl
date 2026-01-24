@@ -19,19 +19,31 @@
 #include "ft6336u.h"
 
 
-#define FT6336_ADDR (0x38 << 1)
 
-HAL_StatusTypeDef TC_Init(I2C_HandleTypeDef *hi2c) {
-    uint8_t dummy;
-    return HAL_I2C_Mem_Read(
-        hi2c,
-        FT6336_ADDR,
-        0x00,
-        I2C_MEMADD_SIZE_8BIT,
-        &dummy,
-        1,
-        HAL_MAX_DELAY
-    );
+
+TouchScreen_TypeDef* FT6336U_Init(I2C_HandleTypeDef *hi2c) {
+  uint8_t dummy;
+  static TouchState_TypeDef touch_0_state = {};
+  static TouchScreen_TypeDef touch_0 = {
+    .Phase    = TOUCH_DISABLED,
+    .State    = &touch_0_state,
+    .Callback = NULL,
+  };
+
+  TouchScreen_TypeDef* dev = &touch_0;
+
+  if (HAL_I2C_Mem_Read(
+      hi2c,
+      FT6336_ADDR,
+      0x00,
+      I2C_MEMADD_SIZE_8BIT,
+      &dummy,
+      1,
+      HAL_MAX_DELAY
+  ) != HAL_OK) return NULL;
+
+  touch_0.Phase = TOUCH_BLOCKED;
+  return dev;
 }
 
 

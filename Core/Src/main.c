@@ -108,6 +108,7 @@ int main(void)
   srand(time(NULL));
 
   Display_TypeDef* display_0 = ST7796_Init();
+  TouchScreen_TypeDef* touch_0 = FT6336U_Init(&hi2c1);
 
   /* USER CODE END 2 */
 
@@ -122,7 +123,7 @@ int main(void)
     // SET_BIT(GPIOC->BSRR, GPIO_BSRR_BR13);
     // HAL_Delay(1000);
 
-    if (display_0->Lock == DISABLE) Display_Run(display_0);
+    Display_Run(display_0, touch_0);
 
     /* USER CODE BEGIN 3 */
   }

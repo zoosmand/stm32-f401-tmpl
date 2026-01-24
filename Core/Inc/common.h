@@ -63,8 +63,16 @@ typedef enum {
   TOUCH_IDLE,
   TOUCH_DOWN,
   TOUCH_HOLD,
-  TOUCH_UP
+  TOUCH_UP,
+  TOUCH_BLOCKED,
+  TOUCH_DISABLED,
 } TouchPhase_t;
+
+typedef struct {
+  TouchState_TypeDef*   State;
+  TouchPhase_t          Phase;
+  HAL_StatusTypeDef     (*Callback)(uint32_t*);
+} TouchScreen_TypeDef;
 
 
 

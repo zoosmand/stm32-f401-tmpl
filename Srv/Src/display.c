@@ -35,9 +35,9 @@ static __IO uint32_t step = 0;
 
 // --------------------------------------------------------------------------
 
-void Display_Run(Display_TypeDef* dev) {
+void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
 
-  if (dev->Lock == ENABLE) return;
+  if (screen->Lock == ENABLE) return;
 
   Font_TypeDef font = {
     .Bgcolor      = COLOR_BLUE,
@@ -69,19 +69,19 @@ void Display_Run(Display_TypeDef* dev) {
   } else {
     step = tick + SIMPLE_PAUSE;
     
-    // Display_Fill(dev, (uint16_t)(step & 0xffff));
-    // Display_FillRectangle(dev, 150, 100, 20, 40, (uint16_t)(tick & 0xffff));
+    // Display_Fill(screen, (uint16_t)(step & 0xffff));
+    // Display_FillRectangle(screen, 150, 100, 20, 40, (uint16_t)(tick & 0xffff));
     color = (uint16_t)(rand() & 0xffff);
 
-    Display_DrawVLine(dev, 100, 0, 320, 2, COLOR_WHITE);
-    Display_DrawHLine(dev, 0, 150, 480, 2, COLOR_WHITE);
+    Display_DrawVLine(screen, 100, 0, 320, 2, COLOR_WHITE);
+    Display_DrawHLine(screen, 0, 150, 480, 2, COLOR_WHITE);
 
-    // Display_DrawRectangle(dev, 120, 160, 50, 80, 4, color);
+    // Display_DrawRectangle(screen, 120, 160, 50, 80, 4, color);
 
-    // Display_DrawCircle(dev, pr_step, 230, 30, 2, COLOR_BLACK);
+    // Display_DrawCircle(screen, pr_step, 230, 30, 2, COLOR_BLACK);
     // pr_step = r_step;
     
-    // Display_DrawCircle(dev, r_step, 230, 30, 2, COLOR_LIME);
+    // Display_DrawCircle(screen, r_step, 230, 30, 2, COLOR_LIME);
     
     // if (narrow) {
       
@@ -99,17 +99,17 @@ void Display_Run(Display_TypeDef* dev) {
     // }
     
     
-    // Display_DrawCircle(dev, 280, 230, 10, 3, color);
-    // Display_FillCircle(dev, 220, 115, 30, color);
+    // Display_DrawCircle(screen, 280, 230, 10, 3, color);
+    // Display_FillCircle(screen, 220, 115, 30, color);
 
     font.Color = color;
     font.Bgcolor = ~color;
 
 
-    // Display_PrintSymbol(dev, 140, 80, &font, '3');
-    Display_PrintString(dev, 40, 180, &font, "CoroideVO!86728543\n");
+    // Display_PrintSymbol(screen, 140, 80, &font, '3');
+    Display_PrintString(screen, 40, 180, &font, "CoroiscreO!8672854\n");
     
-    Display_PrintString(dev, 40, 86, &font2, "1234567890123456789012345678901234567890123456789012345678901234567890\n");
+    Display_PrintString(screen, 40, 86, &font2, "1234567890123456789012345678901234567890123456789012345678901234567890\n");
 
   }
 }

@@ -32,7 +32,7 @@ extern "C" {
 
 
 
-void Display_Run(Display_TypeDef*);
+void Display_Run(Display_TypeDef*, TouchScreen_TypeDef*);
 
 
 
