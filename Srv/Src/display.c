@@ -21,6 +21,8 @@
 
 #define SIMPLE_PAUSE 1000U;
 
+extern uint8_t touch_event;
+
 static __IO uint32_t step = 0;
 
 
@@ -38,6 +40,23 @@ static __IO uint32_t step = 0;
 void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
 
   if (screen->Lock == ENABLE) return;
+
+  switch (touch->Phase){
+    case TOUCH_DISABLED:
+      return;
+
+    case TOUCH_IDLE:
+      if (!touch_event) return;
+      touch_event = 0;
+      TouchScrean_Read(touch);
+      __NOP();
+      break;
+      
+    default:
+      touch_event = 0;
+      return;
+  }
+
 
   Font_TypeDef font = {
     .Bgcolor      = COLOR_BLUE,
@@ -58,60 +77,19 @@ void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
   };
 
 
-  uint32_t tick = HAL_GetTick();
-  uint16_t color;
-  // static uint16_t r_step = 280;
-  // static uint16_t pr_step;
-  // static bool narrow = true;
-  
-  if (step >= tick) {
-    return;
-  } else {
-    step = tick + SIMPLE_PAUSE;
-    
-    // Display_Fill(screen, (uint16_t)(step & 0xffff));
-    // Display_FillRectangle(screen, 150, 100, 20, 40, (uint16_t)(tick & 0xffff));
-    color = (uint16_t)(rand() & 0xffff);
+  uint16_t color = (uint16_t)(rand() & 0xffff);
 
-    Display_DrawVLine(screen, 100, 0, 320, 2, COLOR_WHITE);
-    Display_DrawHLine(screen, 0, 150, 480, 2, COLOR_WHITE);
+  Display_DrawVLine(screen, 100, 0, 320, 2, COLOR_WHITE);
+  Display_DrawHLine(screen, 0, 150, 480, 2, COLOR_WHITE);
 
-    // Display_DrawRectangle(screen, 120, 160, 50, 80, 4, color);
+  font.Color = color;
+  font.Bgcolor = ~color;
 
-    // Display_DrawCircle(screen, pr_step, 230, 30, 2, COLOR_BLACK);
-    // pr_step = r_step;
-    
-    // Display_DrawCircle(screen, r_step, 230, 30, 2, COLOR_LIME);
-    
-    // if (narrow) {
-      
-    //   if (r_step >= 480 - (30 + 2)) {
-    //     narrow = false;
-    //   }
-    //   r_step += 2;
-      
-    // } else {
-    //   if (r_step < (30 + 2 + 4)) {
-    //     narrow = true;
-    //   }
-    //   r_step -= 2;
-      
-    // }
-    
-    
-    // Display_DrawCircle(screen, 280, 230, 10, 3, color);
-    // Display_FillCircle(screen, 220, 115, 30, color);
+  Display_PrintString(screen, 40, 180, &font, "CoroiscreO!8672854\n");
+  Display_PrintString(screen, 40, 86, &font2, "1234567890123456789012345678901234567890123456789012345678901234567890\n");
 
-    font.Color = color;
-    font.Bgcolor = ~color;
+  touch->Phase = TOUCH_IDLE;
 
-
-    // Display_PrintSymbol(screen, 140, 80, &font, '3');
-    Display_PrintString(screen, 40, 180, &font, "CoroiscreO!8672854\n");
-    
-    Display_PrintString(screen, 40, 86, &font2, "1234567890123456789012345678901234567890123456789012345678901234567890\n");
-
-  }
 }
 
 

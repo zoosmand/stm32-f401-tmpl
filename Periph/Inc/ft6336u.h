@@ -37,7 +37,7 @@ extern "C" {
 // | VDD         | 3.3 V                             |
 // | Pullups     | Required on SDA/SCL               |
 
-#define FT6336_ADDR (0x38 << 1)
+#define FT6336_ADDR 0x38
 
 #define TC_RST_GPIO_Port  GPIOB
 #define TC_RST_Pin        GPIO_PIN_5
@@ -60,7 +60,8 @@ extern "C" {
 
 
 TouchScreen_TypeDef* FT6336U_Init(void);
-HAL_StatusTypeDef TC_Read(TouchState_TypeDef *ts);
+
+HAL_StatusTypeDef TouchScrean_Read(TouchScreen_TypeDef*);
 
 
 #define TOUCH_DEADZONE 3  // pixels

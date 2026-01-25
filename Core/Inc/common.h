@@ -70,8 +70,10 @@ typedef enum {
 
 typedef struct {
   TouchState_TypeDef*   State;
+  uint16_t              Model;
   TouchPhase_t          Phase;
   uint32_t*             Bus;
+  uint8_t               BusAddr;
   HAL_StatusTypeDef     (*Callback)(uint32_t*);
 } TouchScreen_TypeDef;
 
