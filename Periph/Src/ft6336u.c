@@ -23,17 +23,34 @@
 extern I2C_HandleTypeDef hi2c1;
 
 
+static void tc_int_callback(void);
+
+
+EXTI_HandleTypeDef hexti_line_9 = {
+  .Line             = 9,
+  .PendingCallback  = tc_int_callback,
+};
+
+
 
 
 
 
 // --------------------------------------------------------------------------
 
-__STATIC_INLINE void tc_reset() {
+__STATIC_INLINE void tc_reset(void) {
   HAL_GPIO_WritePin(TC_RST_GPIO_Port, TC_RST_Pin, GPIO_PIN_RESET);
   HAL_Delay(5);
   HAL_GPIO_WritePin(TC_RST_GPIO_Port, TC_RST_Pin, GPIO_PIN_SET);
   HAL_Delay(200);
+}
+
+
+// --------------------------------------------------------------------------
+
+static void tc_int_callback(void) {
+
+  HAL_Delay(100);
 }
 
 
@@ -57,12 +74,24 @@ TouchScreen_TypeDef* FT6336U_Init(void) {
 
   /* Initialize RESET Pin */
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-
+  
   GPIO_InitStruct.Pin = TC_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(TC_RST_GPIO_Port, &GPIO_InitStruct);
+  
+  /* Initialize INT Pin */
+  GPIO_InitStruct.Pin = TC_INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(TC_INT_GPIO_Port, &GPIO_InitStruct);
+
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
 
   tc_reset();
 
