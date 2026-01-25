@@ -14,7 +14,7 @@
       "name": "Debug (OpenOCD no SWO)",
       "device": "STM32F401RCT6",
       "v1": false,
-      "svdFile": "${workspaceRoot}/STM32F401.svd",
+      "svdFile": "${workspaceRoot}/stm32f401.svd",
       "armToolchainPath": "${env:VSARM}/arm-gcc/bin",
       "configFiles": [
         "${env:SHARE}/openocd/scripts/interface/stlink.cfg",
@@ -31,7 +31,7 @@
       "name": "Debug (ST-Util)",
       "device": "STM32F401RCT6",
       "v1": false,
-      "svdFile": "${workspaceRoot}/STM32F401.svd",
+      "svdFile": "${workspaceRoot}/stm32f401.svd",
       "armToolchainPath": "${env:VSARM}/arm-gcc/bin"
     }
   ]
