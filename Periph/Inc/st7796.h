@@ -35,6 +35,16 @@ extern "C" {
 // 0x08 - BRG
 #define ORIENTATION       (0x80 | 0x00)
 
+#if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
+  #define DISPLAY_WIDTH   320
+  #define DISPLAY_HEIGHT  480
+#endif
+
+#if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
+  #define DISPLAY_WIDTH   480
+  #define DISPLAY_HEIGHT  320
+#endif
+
 
 /* Define colors*/
 #define COLOR_WHITE       (uint16_t)0xffff

@@ -63,6 +63,9 @@ TouchScreen_TypeDef* FT6336U_Init(void);
 
 HAL_StatusTypeDef TouchScrean_Read(TouchScreen_TypeDef*);
 
+void TouchScreen_MapToDisplay(uint16_t*, uint16_t*, uint16_t);
+
+
 
 #define TOUCH_DEADZONE 3  // pixels
 

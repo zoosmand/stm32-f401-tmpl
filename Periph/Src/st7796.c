@@ -143,14 +143,14 @@ Display_TypeDef* ST7796_Init(void) {
     .Bus        = (uint32_t*)&hspi1,
     .PixBuf     = pixbuf,
     .PixBufSize = PIX_BUF_SZ,
-    #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
-    .Width      = 320,
-    .Height     = 480,
-    #endif
-    #if (ORIENTATION == 0x80) || (ORIENTATION == 0x40)
-    .Width      = 480,
-    .Height     = 320,
-    #endif
+    // #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
+    // .Width      = 320,
+    // .Height     = 480,
+    // #endif
+    // #if (ORIENTATION == 0x80) || (ORIENTATION == 0x40)
+    .Width      = DISPLAY_WIDTH,
+    .Height     = DISPLAY_HEIGHT,
+    // #endif
   };
 
   Display_TypeDef* dev = &display_0;
@@ -414,7 +414,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev,
 
 __STATIC_INLINE uint32_t prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, char ch, uint32_t tp, uint32_t bi) {
 
-  // shift the glig index
+  // shift the glyph index
   if ((ch < 32) || (ch > 126)) {
     if (ch == 176) ch = 95;
     else ch = 32;
@@ -514,3 +514,4 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
 
   return HAL_OK;
 }
+

@@ -137,22 +137,30 @@ HAL_StatusTypeDef __attribute__((weak)) TouchScrean_Read(TouchScreen_TypeDef* de
 
 // --------------------------------------------------------------------------
 
-void TouchScreen_MapToDisplay(uint16_t *x, uint16_t *y, uint16_t w, uint16_t h) {
-    uint16_t tx = *x;
-    uint16_t ty = *y;
+void TouchScreen_MapToDisplay(uint16_t* x, uint16_t* y, uint16_t orientation) {
+  uint16_t tx = *x;
+  uint16_t ty = *y;
 
-#if ORIENTATION == 0x00
-    // normal
-#elif ORIENTATION == 0x60
-    *x = ty;
-    *y = w - tx;
-#elif ORIENTATION == 0xa0
-    *x = w - tx;
-    *y = h - ty;
-#elif ORIENTATION == 0xa0
-    *x = h - ty;
+  switch (orientation & 0xf0) {
+    case 0x40:
     *y = tx;
-#endif
+    *x = ty;
+    break;
+    
+    case 0x80:
+    *y = DISPLAY_HEIGHT - tx;
+    *x = DISPLAY_WIDTH - ty;
+    break;
+    
+    case 0xc0:
+    *x = DISPLAY_HEIGHT - tx;
+    *y = DISPLAY_WIDTH - ty;
+    break;
+    
+    case 0x00:
+    default:
+      break;
+  }
 }
 
 
