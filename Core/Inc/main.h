@@ -29,18 +29,28 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <time.h>
 #include <stdbool.h>
+
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "fonts.h"
+#include "common.h"
 #include "st7796.h"
+#include "ft6336u.h"
+#include "display.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-extern SPI_HandleTypeDef hspi1;
-extern DMA_HandleTypeDef hdma_spi1_rx;
-extern DMA_HandleTypeDef hdma_spi1_tx;
+// extern DMA_HandleTypeDef hdma_spi1_rx;
+// extern DMA_HandleTypeDef hdma_spi1_tx;
+
+// extern TouchScreen_TypeDef touch_0;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
