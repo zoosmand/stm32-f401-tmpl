@@ -19,16 +19,21 @@
 #include "ft6336u.h"
 
 
-
+/* --- exported public variables --- */
 extern I2C_HandleTypeDef hi2c1;
 
 
-static void tc_int_callback(void);
+/* --- private functions --- */
+static void tc_int_event_callback(void);
 
 
-EXTI_HandleTypeDef hexti_line_9 = {
-  .Line             = 9,
-  .PendingCallback  = tc_int_callback,
+/* --- private variables --- */
+
+
+/* --- public variables --- */
+EXTI_HandleTypeDef exti_line_9 = {
+  .Line             = TC_INT_Pin_Pos,
+  .PendingCallback  = tc_int_event_callback,
 };
 
 
@@ -48,7 +53,7 @@ __STATIC_INLINE void tc_reset(void) {
 
 // --------------------------------------------------------------------------
 
-static void tc_int_callback(void) {
+static void tc_int_event_callback(void) {
 
   HAL_Delay(100);
 }

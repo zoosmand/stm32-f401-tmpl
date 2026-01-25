@@ -44,6 +44,7 @@ extern "C" {
 
 #define TC_INT_GPIO_Port  GPIOB
 #define TC_INT_Pin        GPIO_PIN_9
+#define TC_INT_Pin_Pos    9
 
 
 // Register	Addr	Size	Meaning
