@@ -47,9 +47,10 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-extern SPI_HandleTypeDef hspi1;
-extern DMA_HandleTypeDef hdma_spi1_rx;
-extern DMA_HandleTypeDef hdma_spi1_tx;
+// extern DMA_HandleTypeDef hdma_spi1_rx;
+// extern DMA_HandleTypeDef hdma_spi1_tx;
+
+// extern TouchScreen_TypeDef touch_0;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

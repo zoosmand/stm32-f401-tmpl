@@ -20,29 +20,60 @@
 
 
 
+extern I2C_HandleTypeDef hi2c1;
 
-TouchScreen_TypeDef* FT6336U_Init(I2C_HandleTypeDef *hi2c) {
-  uint8_t dummy;
+
+
+
+
+
+// --------------------------------------------------------------------------
+
+__STATIC_INLINE void tc_reset() {
+  HAL_GPIO_WritePin(TC_RST_GPIO_Port, TC_RST_Pin, GPIO_PIN_RESET);
+  HAL_Delay(5);
+  HAL_GPIO_WritePin(TC_RST_GPIO_Port, TC_RST_Pin, GPIO_PIN_SET);
+  HAL_Delay(200);
+}
+
+
+// --------------------------------------------------------------------------
+
+TouchScreen_TypeDef* FT6336U_Init(void) {
+
   static TouchState_TypeDef touch_0_state = {};
   static TouchScreen_TypeDef touch_0 = {
     .Phase    = TOUCH_DISABLED,
     .State    = &touch_0_state,
+    .Bus      = (uint32_t*)&hi2c1,
     .Callback = NULL,
   };
 
   TouchScreen_TypeDef* dev = &touch_0;
+  I2C_HandleTypeDef* bus = (I2C_HandleTypeDef*)dev->Bus;
 
-  if (HAL_I2C_Mem_Read(
-      hi2c,
-      FT6336_ADDR,
-      0x00,
-      I2C_MEMADD_SIZE_8BIT,
-      &dummy,
-      1,
-      HAL_MAX_DELAY
-  ) != HAL_OK) return NULL;
+  dev->Phase = TOUCH_LOCKED;
+  if (bus->Lock == HAL_LOCKED) return dev;
 
-  touch_0.Phase = TOUCH_BLOCKED;
+  /* Initialize RESET Pin */
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  GPIO_InitStruct.Pin = TC_RST_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(TC_INT_GPIO_Port, &GPIO_InitStruct);
+
+  tc_reset();
+
+  /* Probe device */
+  if (HAL_I2C_IsDeviceReady(bus, FT6336_ADDR, 3, 100) != HAL_OK) return dev;
+  
+  uint8_t dummy;
+
+  if (HAL_I2C_Mem_Read(bus, FT6336_ADDR, 0x00, I2C_MEMADD_SIZE_8BIT, &dummy, 1, HAL_MAX_DELAY) != HAL_OK) return dev;
+  
+  dev->Phase = TOUCH_IDLE;
   return dev;
 }
 

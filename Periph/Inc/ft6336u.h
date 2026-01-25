@@ -56,10 +56,9 @@ extern "C" {
 // uint16_t x = ((xh & 0x0F) << 8) | xl;
 // uint16_t y = ((yh & 0x0F) << 8) | yl;
 
-extern I2C_HandleTypeDef hi2c1;
 
 
-TouchScreen_TypeDef* FT6336U_Init(I2C_HandleTypeDef *hi2c);
+TouchScreen_TypeDef* FT6336U_Init(void);
 HAL_StatusTypeDef TC_Read(TouchState_TypeDef *ts);
 
 

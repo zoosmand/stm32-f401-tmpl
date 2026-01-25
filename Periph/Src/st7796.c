@@ -20,6 +20,9 @@
 
 __IO bool st7796_dma_busy = false;
 
+extern SPI_HandleTypeDef hspi1;
+
+
 
 // --------------------------------------------------------------------------
 
@@ -39,7 +42,7 @@ __STATIC_INLINE void dc_data(void) {
 
 __STATIC_INLINE void write_cmd(Display_TypeDef* dev, uint8_t cmd) {
   dc_cmd();
-  HAL_SPI_Transmit((SPI_HandleTypeDef*)dev->Device, &cmd, 1, HAL_MAX_DELAY);
+  HAL_SPI_Transmit((SPI_HandleTypeDef*)dev->Bus, &cmd, 1, HAL_MAX_DELAY);
 }
 
 
@@ -47,7 +50,7 @@ __STATIC_INLINE void write_cmd(Display_TypeDef* dev, uint8_t cmd) {
 
 __STATIC_INLINE void write_data(Display_TypeDef* dev, const uint8_t *data, uint32_t len) {
   dc_data();
-  HAL_SPI_Transmit((SPI_HandleTypeDef*)dev->Device, (uint8_t*)data, len, HAL_MAX_DELAY);
+  HAL_SPI_Transmit((SPI_HandleTypeDef*)dev->Bus, (uint8_t*)data, len, HAL_MAX_DELAY);
 }
 
 
@@ -88,7 +91,7 @@ __STATIC_INLINE void write_data_dma(Display_TypeDef* dev, uint16_t *data, uint32
   dc_data();
   st7796_dma_busy = true;
   
-  if (HAL_SPI_Transmit_DMA((SPI_HandleTypeDef*)dev->Device, (uint8_t*)data, len) != HAL_OK) {
+  if (HAL_SPI_Transmit_DMA((SPI_HandleTypeDef*)dev->Bus, (uint8_t*)data, len) != HAL_OK) {
     st7796_dma_busy = false; // important safety
     return;
   }
@@ -137,7 +140,7 @@ Display_TypeDef* ST7796_Init(void) {
   __attribute__((section(".dma_buffer"), aligned(4))) static uint16_t pixbuf[PIX_BUF_SZ];
   static Display_TypeDef display_0 = {
     .Model      = 7796,
-    .Device     = (uint32_t*)&hspi1,
+    .Bus        = (uint32_t*)&hspi1,
     .PixBuf     = pixbuf,
     .PixBufSize = PIX_BUF_SZ,
     #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
@@ -151,8 +154,10 @@ Display_TypeDef* ST7796_Init(void) {
   };
 
   Display_TypeDef* dev = &display_0;
+  SPI_HandleTypeDef* bus = (SPI_HandleTypeDef*)dev->Bus;
 
   if (dev->Lock == DISABLE) dev->Lock = ENABLE;
+  if (bus->Lock == HAL_LOCKED) return dev;
 
   uint8_t initData[16];
 

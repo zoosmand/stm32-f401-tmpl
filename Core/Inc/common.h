@@ -35,7 +35,7 @@ typedef struct {
   uint16_t              Model;
   uint16_t              Width;
   uint16_t              Height;
-  uint32_t*             Device;
+  uint32_t*             Bus;
   uint16_t*             PixBuf;
   uint16_t              PixBufSize;
   HAL_StatusTypeDef     (*Callback)(uint32_t*);
@@ -64,13 +64,14 @@ typedef enum {
   TOUCH_DOWN,
   TOUCH_HOLD,
   TOUCH_UP,
-  TOUCH_BLOCKED,
+  TOUCH_LOCKED,
   TOUCH_DISABLED,
 } TouchPhase_t;
 
 typedef struct {
   TouchState_TypeDef*   State;
   TouchPhase_t          Phase;
+  uint32_t*             Bus;
   HAL_StatusTypeDef     (*Callback)(uint32_t*);
 } TouchScreen_TypeDef;
 

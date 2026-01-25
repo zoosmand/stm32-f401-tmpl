@@ -108,7 +108,7 @@ int main(void)
   srand(time(NULL));
 
   Display_TypeDef* display_0 = ST7796_Init();
-  TouchScreen_TypeDef* touch_0 = FT6336U_Init(&hi2c1);
+  TouchScreen_TypeDef* touch_0 = FT6336U_Init();
 
   /* USER CODE END 2 */
 
