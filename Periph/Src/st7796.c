@@ -84,14 +84,14 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
 
 // --------------------------------------------------------------------------
 
-__STATIC_INLINE void write_data_dma(Display_TypeDef* dev, uint16_t *data, uint32_t len) {
+__STATIC_INLINE void write_data_dma(Display_TypeDef* dev) {
   
   while (st7796_dma_busy);
   
   dc_data();
   st7796_dma_busy = true;
   
-  if (HAL_SPI_Transmit_DMA((SPI_HandleTypeDef*)dev->Bus, (uint8_t*)data, len) != HAL_OK) {
+  if (HAL_SPI_Transmit_DMA((SPI_HandleTypeDef*)dev->Bus, (uint8_t*)dev->PixBuf, (dev->PixBufActiveSize * 2)) != HAL_OK) {
     st7796_dma_busy = false; // important safety
     return;
   }
@@ -328,19 +328,18 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* d
   display_set_window(dev, x, y, (rw - 1), (rh - 1));
 
   /* prepare color & optimize buffer filler */
-  uint32_t pcnt = h * w;
-  uint32_t ccnt = (pcnt > dev->PixBufSize) ? dev->PixBufSize : pcnt; 
+  uint32_t total = h * w;
+  uint32_t ccnt = (total > dev->PixBufSize) ? dev->PixBufSize : total; 
   for (uint32_t i = 0; i < ccnt; i++) {
     dev->PixBuf[i] = c;
   }
 
-  uint32_t total = pcnt * 2;
-  uint32_t chunk = 0;
-  
+  dev->PixBufActiveSize = 0;
+
   while (total) {
-    chunk = (total > dev->PixBufSize) ? dev->PixBufSize : total;
-    write_data_dma(dev, dev->PixBuf, chunk);
-    total -= chunk;
+    dev->PixBufActiveSize = (total > dev->PixBufSize) ? dev->PixBufSize : total;
+    write_data_dma(dev);
+    total -= dev->PixBufActiveSize;
   }
 
   return HAL_OK;
@@ -448,7 +447,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev,
 
 // --------------------------------------------------------------------------
 
-__STATIC_INLINE uint32_t prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, char ch, uint32_t tp, uint32_t bi) {
+__STATIC_INLINE void prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, char ch, uint32_t tp) {
 
   // shift the glyph index
   if ((ch < 32) || (ch > 126)) {
@@ -458,6 +457,8 @@ __STATIC_INLINE uint32_t prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, ch
   ch -= 32;
 
   const uint8_t *glyph = f->Font + (ch * f->BytesPerGlif);
+
+  uint32_t bi = dev->PixBufActiveSize;
 
   uint32_t pixel_count = 0;
 
@@ -471,7 +472,7 @@ __STATIC_INLINE uint32_t prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, ch
       pixel_count++;
     }
   }
-  return bi;
+  dev->PixBufActiveSize = bi;
 }
 
 
@@ -486,12 +487,12 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef* dev
   display_set_window(dev, x, y, rw - 1, rh - 1);
   const uint32_t total_pixels = f->Width * f->Height;
 
-  uint32_t buf_idx = 0;
+  dev->PixBufActiveSize = 0;
 
-  buf_idx = prepare_glyph(dev, f, ch, total_pixels, buf_idx);
+  prepare_glyph(dev, f, ch, total_pixels);
 
-  if (buf_idx) {
-      write_data_dma(dev, dev->PixBuf, buf_idx * 2);
+  if (dev->PixBufActiveSize) {
+      write_data_dma(dev);
   }
 
   return HAL_OK;
@@ -507,7 +508,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
 
   uint16_t char_count = 0;
   uint16_t x_shift = x;
-  uint32_t buf_idx = 0;
+  // uint32_t buf_idx = 0;
 
   while (str[char_count++] != '\n') {
     if (char_count > 64) break;
@@ -525,12 +526,12 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
 
     if (x_shift > dev->Width) return (HAL_OK);
 
-    buf_idx = 0;
+    dev->PixBufActiveSize = 0;
     for (uint8_t j = 0; j < chunk; j++) {
-      buf_idx = prepare_glyph(dev, f, str[(j + (chunk * (i - 1)))], total_pixels, buf_idx);
+      prepare_glyph(dev, f, str[(j + (chunk * (i - 1)))], total_pixels);
     }
 
-    write_data_dma(dev, dev->PixBuf, total_pixels * 2);
+    write_data_dma(dev);
   }
 
   // print the rest of the string
@@ -539,13 +540,13 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
 
     display_set_window(dev, x_shift, y, (x_shift + (str_rest * f->Width) - 1), (y + f->Height - 1));
 
-    buf_idx = 0;
+    dev->PixBufActiveSize = 0;
     total_pixels = f->Width * f->Height * str_rest;
 
     for (uint8_t j = 0; j < str_rest; j++) {
-      buf_idx = prepare_glyph(dev, f, str[char_count - str_rest + j], total_pixels, buf_idx);
+      prepare_glyph(dev, f, str[char_count - str_rest + j], total_pixels);
     }
-    write_data_dma(dev, dev->PixBuf, total_pixels * 2);
+    write_data_dma(dev);
   }
 
   return HAL_OK;
