@@ -54,16 +54,11 @@ extern "C" {
 #define TOUCH1_YH	0x05	// 1	Touch 1 Y high
 #define TOUCH1_YL	0x06	// 1	Touch 1 Y low
 
-// uint16_t x = ((xh & 0x0F) << 8) | xl;
-// uint16_t y = ((yh & 0x0F) << 8) | yl;
-
 
 
 TouchScreen_TypeDef* FT6336U_Init(void);
 
-HAL_StatusTypeDef TouchScrean_Read(TouchScreen_TypeDef*);
-
-void TouchScreen_MapToDisplay(uint16_t*, uint16_t*, uint16_t);
+HAL_StatusTypeDef __attribute__((weak)) TouchScreen_Process(TouchScreen_TypeDef* dev);
 
 
 

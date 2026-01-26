@@ -35,6 +35,7 @@ typedef struct {
   uint16_t              Model;
   uint16_t              Width;
   uint16_t              Height;
+  uint8_t               Orientation;
   uint32_t*             Bus;
   uint16_t*             PixBuf;
   uint32_t              PixBufSize;
@@ -57,25 +58,36 @@ typedef struct {
 
 
 typedef struct {
-  uint8_t  touches;
-  uint16_t x;
-  uint16_t y;
-  uint8_t  event;   // 0=down, 1=up, 2=contact
-} TouchState_TypeDef;
+  // uint8_t               touches;
+  // uint16_t x;
+  // uint16_t y;
+  uint8_t               Event;   // 0=down, 1=up, 2=contact
+  uint16_t              RawX;
+  uint16_t              RawY;
+  uint16_t              X;
+  uint16_t              Y;
+  uint16_t              LastX;
+  uint16_t              LastY;
+  uint8_t               StableCount;
+  uint32_t              Timestamp;
+} TouchContext_TypeDef;
 
 typedef enum {
   TOUCH_IDLE,
   TOUCH_DOWN,
   TOUCH_HOLD,
   TOUCH_UP,
+  TOUCH_DEBOUNCE,
+  TOUCH_ACTIVE,
   TOUCH_LOCKED,
   TOUCH_DISABLED,
-} TouchPhase_t;
+} TouchState_t;
 
 typedef struct {
-  TouchState_TypeDef*   State;
   uint16_t              Model;
-  TouchPhase_t          Phase;
+  uint8_t               Orientation;
+  TouchContext_TypeDef* Context;
+  TouchState_t          State;
   uint32_t*             Bus;
   uint8_t               BusAddr;
   HAL_StatusTypeDef     (*Callback)(uint32_t*);

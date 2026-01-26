@@ -142,7 +142,7 @@ __STATIC_INLINE void read_data_dma(Display_TypeDef* dev) {
   dc_data();
   st7796_dma_busy = true;
   
-  if (HAL_SPI_TransmitReceive_DMA((SPI_HandleTypeDef*)dev->Bus, &dummy, (uint8_t*)dev->PixBufBg, (dev->PixBufBgActiveSize *2)) != HAL_OK) {
+  if (HAL_SPI_TransmitReceive_DMA(bus, &dummy, (uint8_t*)dev->PixBufBg, (dev->PixBufBgActiveSize *2)) != HAL_OK) {
     st7796_dma_busy = false; // important safety
     return;
   }
@@ -206,6 +206,7 @@ Display_TypeDef* ST7796_Init(void) {
   __attribute__((section(".dma_buffer_read"), aligned(4))) static uint16_t pixbuf_bg[PIX_BUF_SZ];
   static Display_TypeDef display_0 = {
     .Model              = 7796,
+    .Orientation        = ORIENTATION,
     .Bus                = (uint32_t*)&hspi1,
     .PixBuf             = pixbuf,
     .PixBufSize         = PIX_BUF_SZ,
