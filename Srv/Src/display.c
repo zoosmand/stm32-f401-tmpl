@@ -78,6 +78,8 @@ void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
 
 
   // uint16_t color = (uint16_t)(rand() & 0xffff);
+  // font.Color = color;
+  // font.Bgcolor = ~color;
 
   static uint16_t ptx; 
   static uint16_t pty; 
@@ -85,9 +87,6 @@ void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
   uint16_t ty = touch->State->y;
   TouchScreen_MapToDisplay(&tx, &ty, ORIENTATION);
 
-
-  // font.Color = color;
-  // font.Bgcolor = ~color;
 
   char position[16];
   sprintf(position, "x:%i y:%i\n", touch->State->x, touch->State->y); 
@@ -99,8 +98,6 @@ void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
   Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
   Display_PrintString(screen, 40, 80, &font, position2);
 
-  // Display_PrintString(screen, 40, 180, &font, "CoroiscreO!8672854\n");
-  // Display_PrintString(screen, 40, 86, &font2, "1234567890123456789012345678901234567890123456789012345678901234567890\n");
 
   Display_DrawVLine(screen, ptx, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
   Display_DrawVLine(screen, tx, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
@@ -110,7 +107,6 @@ void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
 
   ptx = tx;
   pty = ty;
-
 
   touch->Phase = TOUCH_IDLE;
 

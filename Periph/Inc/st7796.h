@@ -90,6 +90,8 @@ HAL_StatusTypeDef __attribute__((weak)) Display_DrawHLine(Display_TypeDef*, uint
 HAL_StatusTypeDef __attribute__((weak)) Display_DrawCircle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
 HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
 
+HAL_StatusTypeDef __attribute__((weak)) Display_FillBackground(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_ReadRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t);
 
 HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef*, uint16_t, uint16_t, Font_TypeDef*, char);
 HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef*, uint16_t, uint16_t, Font_TypeDef*, const char*);

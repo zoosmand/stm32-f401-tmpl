@@ -21,6 +21,7 @@
 __IO bool st7796_dma_busy = false;
 
 extern SPI_HandleTypeDef hspi1;
+extern DMA_HandleTypeDef hdma_spi1_tx;
 
 
 
@@ -75,6 +76,15 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
 
 // --------------------------------------------------------------------------
 
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
+  if (hspi->Instance == SPI1) {
+    st7796_dma_busy = false;
+  }
+}
+
+
+// --------------------------------------------------------------------------
+
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
   if (hspi->Instance == SPI1) {
     st7796_dma_busy = false;
@@ -121,15 +131,24 @@ __STATIC_INLINE void write_backgoung_data_dma(Display_TypeDef* dev) {
 __STATIC_INLINE void read_data_dma(Display_TypeDef* dev) {
   
   while (st7796_dma_busy);
+
+  uint8_t dummy = 0;
+  SPI_HandleTypeDef* bus = (SPI_HandleTypeDef*)dev->Bus;
+
+  hdma_spi1_tx.Init.MemInc = DMA_MINC_DISABLE;
+  if (HAL_DMA_Init(&hdma_spi1_tx) != HAL_OK) Error_Handler();
+
   
   dc_data();
   st7796_dma_busy = true;
   
-  if (HAL_SPI_Receive_DMA((SPI_HandleTypeDef*)dev->Bus, (uint8_t*)dev->PixBufBg, dev->PixBufBgSize) != HAL_OK) {
+  if (HAL_SPI_TransmitReceive_DMA((SPI_HandleTypeDef*)dev->Bus, &dummy, (uint8_t*)dev->PixBufBg, (dev->PixBufBgActiveSize *2)) != HAL_OK) {
     st7796_dma_busy = false; // important safety
     return;
   }
   while (st7796_dma_busy);
+  hdma_spi1_tx.Init.MemInc = DMA_MINC_ENABLE;
+  if (HAL_DMA_Init(&hdma_spi1_tx) != HAL_OK) Error_Handler();
 }
 
 
@@ -373,6 +392,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* d
         break;
 
       case BACK:
+        dev->PixBufBgActiveSize = dev->PixBufActiveSize;
         write_backgoung_data_dma(dev);
         break;
       
@@ -415,9 +435,9 @@ HAL_StatusTypeDef __attribute__((weak)) Display_ReadRectangle(Display_TypeDef* d
   if (rh > dev->Height) return HAL_ERROR;
   display_set_window(dev, x, y, (rw - 1), (rh - 1), READ);
 
-  dev->PixBufBgSize = h * w;
+  dev->PixBufBgActiveSize = dev->PixBufActiveSize;
   
-  write_backgoung_data_dma(dev);
+  read_data_dma(dev);
 
   return HAL_OK;
 }
