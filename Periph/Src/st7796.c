@@ -157,14 +157,16 @@ Display_TypeDef* ST7796_Init(void) {
   __attribute__((section(".dma_buffer_write"), aligned(4))) static uint16_t pixbuf[PIX_BUF_SZ];
   __attribute__((section(".dma_buffer_read"), aligned(4))) static uint16_t pixbuf_bg[PIX_BUF_SZ];
   static Display_TypeDef display_0 = {
-    .Model        = 7796,
-    .Bus          = (uint32_t*)&hspi1,
-    .PixBuf       = pixbuf,
-    .PixBufSize   = PIX_BUF_SZ,
-    .PixBufBg     = pixbuf_bg,
-    .PixBufBgSize = 0,
-    .Width        = DISPLAY_WIDTH,
-    .Height       = DISPLAY_HEIGHT,
+    .Model              = 7796,
+    .Bus                = (uint32_t*)&hspi1,
+    .PixBuf             = pixbuf,
+    .PixBufSize         = PIX_BUF_SZ,
+    .PixBufActiveSize   = 0,
+    .PixBufBg           = pixbuf_bg,
+    .PixBufBgSize       = PIX_BUF_SZ,
+    .PixBufBgActiveSize = 0,
+    .Width              = DISPLAY_WIDTH,
+    .Height             = DISPLAY_HEIGHT,
   };
 
   Display_TypeDef* dev = &display_0;
@@ -310,7 +312,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef* d
   if (Display_DrawHLine(dev, x, y, h, b, c) != HAL_OK) status = HAL_ERROR;
   if (Display_DrawHLine(dev, x, (y + w), h, b, c) != HAL_OK) status = HAL_ERROR;
 
-  return (status);
+  return status;
 }
 
 
@@ -321,8 +323,8 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* d
 
   uint16_t rw = w + x;
   uint16_t rh = h + y;
-  if (rw > dev->Width) return (HAL_ERROR);
-  if (rh > dev->Height) return (HAL_ERROR);
+  if (rw > dev->Width) return HAL_ERROR;
+  if (rh > dev->Height) return HAL_ERROR;
   display_set_window(dev, x, y, (rw - 1), (rh - 1));
 
   /* prepare color & optimize buffer filler */
@@ -341,7 +343,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* d
     total -= chunk;
   }
 
-  return (HAL_OK);
+  return HAL_OK;
 }
 
 
@@ -352,15 +354,15 @@ HAL_StatusTypeDef __attribute__((weak)) Display_ReadRectangle(Display_TypeDef* d
 
   uint16_t rw = w + x;
   uint16_t rh = h + y;
-  if (rw > dev->Width) return (HAL_ERROR);
-  if (rh > dev->Height) return (HAL_ERROR);
+  if (rw > dev->Width) return HAL_ERROR;
+  if (rh > dev->Height) return HAL_ERROR;
   display_set_window(dev, x, y, (rw - 1), (rh - 1));
 
   dev->PixBufBgSize = h * w;
   
   read_data_dma(dev);
 
-  return (HAL_OK);
+  return HAL_OK;
 }
 
 
@@ -395,15 +397,15 @@ HAL_StatusTypeDef __attribute__((weak)) Display_DrawCircle(Display_TypeDef* dev,
   int16_t d = 1 - r;
 
   while (x <= y) {
-    Display_DrawHLine(dev, (x0 + x - b), (y0 + y), b, b, c);
-    Display_DrawHLine(dev, (x0 + x - b), (y0 - y), b, b, c);
-    Display_DrawHLine(dev, (x0 + y - b), (y0 + x), b, b, c);
-    Display_DrawHLine(dev, (x0 + y - b), (y0 - x), b, b, c);
+    if (Display_DrawHLine(dev, (x0 + x - b), (y0 + y), b, b, c) != HAL_OK) return HAL_ERROR;
+    if (Display_DrawHLine(dev, (x0 + x - b), (y0 - y), b, b, c) != HAL_OK) return HAL_ERROR;
+    if (Display_DrawHLine(dev, (x0 + y - b), (y0 + x), b, b, c) != HAL_OK) return HAL_ERROR;
+    if (Display_DrawHLine(dev, (x0 + y - b), (y0 - x), b, b, c) != HAL_OK) return HAL_ERROR;
 
-    Display_DrawHLine(dev, (x0 - x - b), (y0 + y), b, b, c);
-    Display_DrawHLine(dev, (x0 - x - b), (y0 - y), b, b, c);
-    Display_DrawHLine(dev, (x0 - y - b), (y0 + x), b, b, c);
-    Display_DrawHLine(dev, (x0 - y - b), (y0 - x), b, b, c);
+    if (Display_DrawHLine(dev, (x0 - x - b), (y0 + y), b, b, c) != HAL_OK) return HAL_ERROR;
+    if (Display_DrawHLine(dev, (x0 - x - b), (y0 - y), b, b, c) != HAL_OK) return HAL_ERROR;
+    if (Display_DrawHLine(dev, (x0 - y - b), (y0 + x), b, b, c) != HAL_OK) return HAL_ERROR;
+    if (Display_DrawHLine(dev, (x0 - y - b), (y0 - x), b, b, c) != HAL_OK) return HAL_ERROR;
 
     if (d < 0) {
       d += 2 * x + 3;
@@ -413,7 +415,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_DrawCircle(Display_TypeDef* dev,
     }
     x++;
   }
-  return (HAL_OK);
+  return HAL_OK;
 }
 
 
@@ -426,10 +428,10 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev,
 
   while (x <= y) {
 
-    Display_DrawHLine(dev, (x0 - x - 1), (y0 + y), (2 * x + 1), 1, c);
-    Display_DrawHLine(dev, (x0 - x - 1), (y0 - y), (2 * x + 1), 1, c);
-    Display_DrawHLine(dev, (x0 - y - 1), (y0 + x), (2 * y + 1), 1, c);
-    Display_DrawHLine(dev, (x0 - y - 1), (y0 - x), (2 * y + 1), 1, c);
+    if (Display_DrawHLine(dev, (x0 - x - 1), (y0 + y), (2 * x + 1), 1, c) != HAL_OK) return HAL_ERROR;
+    if (Display_DrawHLine(dev, (x0 - x - 1), (y0 - y), (2 * x + 1), 1, c) != HAL_OK) return HAL_ERROR;
+    if (Display_DrawHLine(dev, (x0 - y - 1), (y0 + x), (2 * y + 1), 1, c) != HAL_OK) return HAL_ERROR;
+    if (Display_DrawHLine(dev, (x0 - y - 1), (y0 - x), (2 * y + 1), 1, c) != HAL_OK) return HAL_ERROR;
 
     if (d < 0) {
       d += 2 * x + 3;
@@ -439,7 +441,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef* dev,
     }
     x++;
   }
-  return (HAL_OK);
+  return HAL_OK;
 }
 
 

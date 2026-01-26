@@ -38,8 +38,10 @@ typedef struct {
   uint32_t*             Bus;
   uint16_t*             PixBuf;
   uint32_t              PixBufSize;
+  uint32_t              PixBufActiveSize;
   uint16_t*             PixBufBg;
   uint32_t              PixBufBgSize;
+  uint32_t              PixBufBgActiveSize;
   HAL_StatusTypeDef     (*Callback)(uint32_t*);
 } Display_TypeDef;
 
