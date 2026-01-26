@@ -91,22 +91,22 @@ void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
 
   char position[16];
   sprintf(position, "x:%i y:%i\n", touch->State->x, touch->State->y); 
-  Display_FillRectangle(screen, 40, 180, (font.Width * 16), font.Height, 0x0000);
+  Display_FillRectangle(screen, 40, 180, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
   Display_PrintString(screen, 40, 180, &font, position);
 
   char position2[16];
   sprintf(position2, "x:%i y:%i\n", tx, ty); 
-  Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, 0x0000);
+  Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
   Display_PrintString(screen, 40, 80, &font, position2);
 
   // Display_PrintString(screen, 40, 180, &font, "CoroiscreO!8672854\n");
   // Display_PrintString(screen, 40, 86, &font2, "1234567890123456789012345678901234567890123456789012345678901234567890\n");
 
-  Display_DrawVLine(screen, ptx, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK);
-  Display_DrawVLine(screen, tx, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE);
+  Display_DrawVLine(screen, ptx, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
+  Display_DrawVLine(screen, tx, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
   
-  Display_DrawHLine(screen, 0, pty, DISPLAY_WIDTH, 2, COLOR_BLACK);
-  Display_DrawHLine(screen, 0, ty, DISPLAY_WIDTH, 2, COLOR_WHITE);
+  Display_DrawHLine(screen, 0, pty, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
+  Display_DrawHLine(screen, 0, ty, DISPLAY_WIDTH, 2, COLOR_WHITE, FRONT);
 
   ptx = tx;
   pty = ty;

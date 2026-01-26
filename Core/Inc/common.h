@@ -82,6 +82,17 @@ typedef struct {
 } TouchScreen_TypeDef;
 
 
+typedef enum {
+  WRITE = 0,
+  READ  = 1,
+  NOOP  = 2  
+} TrasmissionDirection_t;
+
+typedef enum {
+  FRONT = 0,
+  BACK  = 1,
+  NONE  = 2  
+} ImageLayer_t;
 
 
 #ifdef __cplusplus
