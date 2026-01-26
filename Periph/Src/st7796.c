@@ -101,6 +101,23 @@ __STATIC_INLINE void write_data_dma(Display_TypeDef* dev, uint16_t *data, uint32
 
 // --------------------------------------------------------------------------
 
+__STATIC_INLINE void read_data_dma(Display_TypeDef* dev) {
+  
+  while (st7796_dma_busy);
+  
+  dc_data();
+  st7796_dma_busy = true;
+  
+  if (HAL_SPI_Receive_DMA((SPI_HandleTypeDef*)dev->Bus, (uint8_t*)dev->PixBufBg, dev->PixBufBgSize) != HAL_OK) {
+    st7796_dma_busy = false; // important safety
+    return;
+  }
+  while (st7796_dma_busy);
+}
+
+
+// --------------------------------------------------------------------------
+
 __STATIC_INLINE void display_set_window(Display_TypeDef* dev, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
 
   uint8_t data[4];
@@ -137,20 +154,17 @@ __STATIC_INLINE void display_set_window(Display_TypeDef* dev, uint16_t x0, uint1
 
 Display_TypeDef* ST7796_Init(void) {
 
-  __attribute__((section(".dma_buffer"), aligned(4))) static uint16_t pixbuf[PIX_BUF_SZ];
+  __attribute__((section(".dma_buffer_write"), aligned(4))) static uint16_t pixbuf[PIX_BUF_SZ];
+  __attribute__((section(".dma_buffer_read"), aligned(4))) static uint16_t pixbuf_bg[PIX_BUF_SZ];
   static Display_TypeDef display_0 = {
-    .Model      = 7796,
-    .Bus        = (uint32_t*)&hspi1,
-    .PixBuf     = pixbuf,
-    .PixBufSize = PIX_BUF_SZ,
-    // #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
-    // .Width      = 320,
-    // .Height     = 480,
-    // #endif
-    // #if (ORIENTATION == 0x80) || (ORIENTATION == 0x40)
-    .Width      = DISPLAY_WIDTH,
-    .Height     = DISPLAY_HEIGHT,
-    // #endif
+    .Model        = 7796,
+    .Bus          = (uint32_t*)&hspi1,
+    .PixBuf       = pixbuf,
+    .PixBufSize   = PIX_BUF_SZ,
+    .PixBufBg     = pixbuf_bg,
+    .PixBufBgSize = 0,
+    .Width        = DISPLAY_WIDTH,
+    .Height       = DISPLAY_HEIGHT,
   };
 
   Display_TypeDef* dev = &display_0;
@@ -161,10 +175,11 @@ Display_TypeDef* ST7796_Init(void) {
 
   uint8_t initData[16];
 
-  size_t dma_size = (size_t)((uintptr_t)&__dma_buffer_end__ - (uintptr_t)&__dma_buffer_start__);
+  size_t dma_write_size = (size_t)((uintptr_t)&__dma_buffer_write_end__ - (uintptr_t)&__dma_buffer_write_start__);
+  size_t dma_read_size = (size_t)((uintptr_t)&__dma_buffer_write_end__ - (uintptr_t)&__dma_buffer_write_start__);
 
   // optional sanity check
-  if (dma_size != (2 * PIX_BUF_SZ)) return dev;
+  if ((dma_write_size != (2 * PIX_BUF_SZ)) | (dma_read_size != (2 * PIX_BUF_SZ))) return dev;
 
   // initialization beginning
   display_reset();
@@ -325,6 +340,25 @@ HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* d
     write_data_dma(dev, dev->PixBuf, chunk);
     total -= chunk;
   }
+
+  return (HAL_OK);
+}
+
+
+
+// --------------------------------------------------------------------------
+
+HAL_StatusTypeDef __attribute__((weak)) Display_ReadRectangle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+
+  uint16_t rw = w + x;
+  uint16_t rh = h + y;
+  if (rw > dev->Width) return (HAL_ERROR);
+  if (rh > dev->Height) return (HAL_ERROR);
+  display_set_window(dev, x, y, (rw - 1), (rh - 1));
+
+  dev->PixBufBgSize = h * w;
+  
+  read_data_dma(dev);
 
   return (HAL_OK);
 }

@@ -57,7 +57,7 @@ extern "C" {
 #define COLOR_LIME        (uint16_t)(COLOR_GREEN | COLOR_RED)
 
 
-#define PIX_BUF_SZ        8192U  // words (1024 pixels)
+#define PIX_BUF_SZ        4096U  // words (4096 pixels)
 
 #define TFT_CS_GPIO_Port  GPIOA
 #define TFT_CS_Pin        GPIO_PIN_4
@@ -73,8 +73,8 @@ extern "C" {
 // #define TFT_BL_Pin       GPIO_PIN_10   // optional (or tie to VCC)
 
 
-extern uint8_t __dma_buffer_start__;
-extern uint8_t __dma_buffer_end__;
+extern uint8_t __dma_buffer_write_start__;
+extern uint8_t __dma_buffer_write_end__;
 
 
 Display_TypeDef* ST7796_Init(void);
