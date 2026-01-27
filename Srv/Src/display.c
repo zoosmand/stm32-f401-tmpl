@@ -21,7 +21,7 @@
 
 #define SIMPLE_PAUSE 1000U;
 
-extern TouchState_t touch_event;
+extern TouchState_t touch_activated_flag;
 
 static __IO uint32_t step = 0;
 
@@ -32,38 +32,7 @@ static __IO uint32_t step = 0;
 /////////////////////////////////////////////////////////////////////////////
 
 
-
-
-
-// --------------------------------------------------------------------------
-
-void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
-
-  if (screen->Lock == ENABLE) return;
-  if (touch_event != TOUCH_ACTIVE) return;
-
-  TouchScreen_Process(touch);
-  
-  switch (touch->State) {
-    case TOUCH_DOWN:
-    /* code */
-    break;
-    
-    case TOUCH_UP:
-    /* code */
-    break;
-    
-    case TOUCH_HOLD:
-    /* code */
-    break;
-    
-    default:
-    break;
-  }
-  
-  touch_event = TOUCH_IDLE;
-  touch->State = TOUCH_IDLE;
-
+static void on_down(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
 
   Font_TypeDef font = {
     .Bgcolor      = COLOR_BLUE,
@@ -73,6 +42,87 @@ void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
     .Width        = 24,
     .BytesPerGlif = 96,
   };
+
+  char position[16];
+  sprintf(position, "x:%i y:%i\n", touch->Context->X, touch->Context->Y); 
+  Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
+  Display_PrintString(screen, 40, 80, &font, position);
+
+
+  Display_DrawVLine(screen, touch->Context->LastX, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
+  Display_DrawVLine(screen, touch->Context->X, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
+  
+  Display_DrawHLine(screen, 0, touch->Context->LastY, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
+  Display_DrawHLine(screen, 0, touch->Context->Y, DISPLAY_WIDTH, 2, COLOR_WHITE, FRONT);
+
+  touch->Context->LastX = touch->Context->X;
+  touch->Context->LastY = touch->Context->Y;
+
+}
+
+
+
+static void on_up(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
+
+}
+
+static void on_move(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
+
+}
+
+
+
+
+// --------------------------------------------------------------------------
+
+void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
+
+  if (screen->Lock == ENABLE) return;
+  if (touch_activated_flag != TOUCH_ACTIVE) return;
+
+  TouchScreen_Process(touch);
+
+  switch (touch->Event) {
+    case TOUCH_ON_DOWN:
+      __NOP();
+      // touch->Event = TOUCH_ON_UP;
+      // touch->State = TOUCH_IDLE;
+      break;
+    
+    case TOUCH_ON_UP:
+      on_down(screen, touch);
+      touch->Event = TOUCH_ON_IDLE;
+      touch->State = TOUCH_IDLE;
+      break;
+    
+    case TOUCH_ON_HOLD:
+      __NOP();
+      break;
+    
+    case TOUCH_ON_MOVE:
+      __NOP();
+      // touch->Event = TOUCH_ON_IDLE;
+      // touch->State = TOUCH_IDLE;
+      break;
+    
+    case TOUCH_ON_IDLE:
+      default:
+      __NOP();
+      break;
+  }
+  
+  // touch_activated_flag = TOUCH_IDLE;
+  // touch->State = TOUCH_IDLE;
+
+
+  // Font_TypeDef font = {
+  //   .Bgcolor      = COLOR_BLUE,
+  //   .Color        = COLOR_LIME,
+  //   .Font         = (uint8_t*)&font_dot_20x28,
+  //   .Height       = 32,
+  //   .Width        = 24,
+  //   .BytesPerGlif = 96,
+  // };
 
   // Font_TypeDef font2 = {
   //   .Bgcolor      = COLOR_BLUE,
@@ -89,20 +139,20 @@ void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
   // font.Bgcolor = ~color;
 
 
-  char position[16];
-  sprintf(position, "x:%i y:%i\n", touch->Context->X, touch->Context->Y); 
-  Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
-  Display_PrintString(screen, 40, 80, &font, position);
+  // char position[16];
+  // sprintf(position, "x:%i y:%i\n", touch->Context->X, touch->Context->Y); 
+  // Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
+  // Display_PrintString(screen, 40, 80, &font, position);
 
 
-  Display_DrawVLine(screen, touch->Context->LastX, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
-  Display_DrawVLine(screen, touch->Context->X, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
+  // Display_DrawVLine(screen, touch->Context->LastX, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
+  // Display_DrawVLine(screen, touch->Context->X, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
   
-  Display_DrawHLine(screen, 0, touch->Context->LastY, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
-  Display_DrawHLine(screen, 0, touch->Context->Y, DISPLAY_WIDTH, 2, COLOR_WHITE, FRONT);
+  // Display_DrawHLine(screen, 0, touch->Context->LastY, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
+  // Display_DrawHLine(screen, 0, touch->Context->Y, DISPLAY_WIDTH, 2, COLOR_WHITE, FRONT);
 
-  touch->Context->LastX = touch->Context->X;
-  touch->Context->LastY = touch->Context->Y;
+  // touch->Context->LastX = touch->Context->X;
+  // touch->Context->LastY = touch->Context->Y;
   
 
 }

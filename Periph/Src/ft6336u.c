@@ -40,7 +40,7 @@ EXTI_HandleTypeDef exti_line_9 = {
   .Line             = TC_INT_Pin_Pos,
   .PendingCallback  = tc_int_event_callback,
 };
-TouchState_t touch_event = TOUCH_IDLE;
+TouchState_t touch_activated_flag = TOUCH_IDLE;
 
 
 
@@ -60,7 +60,7 @@ __STATIC_INLINE void tc_reset(void) {
 // --------------------------------------------------------------------------
 
 static void tc_int_event_callback(void) {
-  touch_event = TOUCH_ACTIVE;
+  touch_activated_flag = TOUCH_ACTIVE;
 }
 
 
@@ -131,9 +131,10 @@ static HAL_StatusTypeDef tc_read(TouchScreen_TypeDef* dev) {
 
     if (touches == 0) return HAL_OK;
 
-    dev->Context->Event = (buf[1] >> 6) & 0x03;
-    dev->Context->RawX  = ((buf[1] & 0x0f) << 8) | buf[2];
-    dev->Context->RawY  = ((buf[3] & 0x0f) << 8) | buf[4];
+    dev->Context->Touches = touches;
+    dev->Context->Event   = (buf[1] >> 6) & 0x03;
+    dev->Context->RawX    = ((buf[1] & 0x0f) << 8) | buf[2];
+    dev->Context->RawY    = ((buf[3] & 0x0f) << 8) | buf[4];
 
     return HAL_OK;
 }
@@ -177,6 +178,95 @@ HAL_StatusTypeDef __attribute__((weak)) TouchScreen_Process(TouchScreen_TypeDef*
   // Normilixe coordinates
   tc_map_to_display(dev);
 
+  __NOP();
+
+  switch (dev->State) {
+    case TOUCH_IDLE:
+      if (dev->Context->Touches) {
+        dev->State = TOUCH_DEBOUNCE;
+        dev->Event = TOUCH_ON_IDLE;
+        dev->Context->StableCount = 1;
+        dev->Context->BounceX = dev->Context->X;
+        dev->Context->BounceY = dev->Context->Y;
+      }
+      break;
+    
+    case TOUCH_DEBOUNCE:
+      if (!dev->Context->Touches) {
+        dev->State = TOUCH_IDLE;
+        dev->Event = TOUCH_ON_IDLE;
+        dev->Context->StableCount = 0;
+        dev->Context->BounceX = 0;
+        dev->Context->BounceY = 0;
+        break;
+      }
+      if (abs(dev->Context->X - dev->Context->BounceX) <= TOUCH_MOVE_THRESHOLD &&
+        abs(dev->Context->Y - dev->Context->BounceY) <= TOUCH_MOVE_THRESHOLD) {
+        dev->Context->StableCount++;
+
+        if (dev->Context->StableCount >= TOUCH_STABLE_COUNT) {
+          dev->State = TOUCH_ACTIVE;
+          dev->Context->X = dev->Context->BounceX;
+          dev->Context->Y = dev->Context->BounceY;
+          // dev->Event = TOUCH_ON_DOWN;
+        }
+      } else {
+        if (dev->Context->StableCount > TOUCH_STABLE_COUNT) {
+          dev->State = TOUCH_IDLE;
+          dev->Event = TOUCH_ON_IDLE;
+          break;
+        }
+        dev->Context->StableCount++;
+        dev->Context->BounceX = dev->Context->X;
+        dev->Context->BounceY = dev->Context->Y;
+      }
+      break;
+
+    case TOUCH_ACTIVE:
+      if (dev->Context->Touches) {
+        if (abs(dev->Context->X - dev->Context->BounceX) > TOUCH_MOVE_THRESHOLD ||
+        abs(dev->Context->Y - dev->Context->BounceY) > TOUCH_MOVE_THRESHOLD) {
+          dev->Event = TOUCH_ON_MOVE;
+          dev->State = TOUCH_HOLD;
+        } else {
+          dev->State = TOUCH_DOWN;
+          dev->Event = TOUCH_ON_DOWN;
+          dev->Context->StableCount = 1;
+        }
+      }
+      break;
+
+    case TOUCH_RELEASE:
+      if (dev->Context->Touches) {
+        dev->State = TOUCH_ACTIVE;
+        dev->Event = TOUCH_ON_MOVE;
+      } else {
+        dev->Context->StableCount++;
+        if (dev->Context->StableCount >= TOUCH_RELEASE_COUNT) {
+          dev->State = TOUCH_IDLE;
+          dev->Event = TOUCH_ON_UP;
+        }
+      }
+      break;
+
+    case TOUCH_HOLD:
+      if (!dev->Context->Touches) {
+        dev->State = TOUCH_IDLE;
+        dev->Event = TOUCH_ON_IDLE;
+      }
+      break;
+
+    case TOUCH_DOWN:
+      if (dev->Context->Touches) {
+        dev->State = TOUCH_RELEASE;
+        dev->Event = TOUCH_ON_UP;
+      }
+      break;
+
+    default:
+      break;
+  }
+
 
     // static TouchState_TypeDef last = {0};
 
@@ -195,6 +285,8 @@ HAL_StatusTypeDef __attribute__((weak)) TouchScreen_Process(TouchScreen_TypeDef*
     // }
 
     // last = *ts;
+
+  touch_activated_flag = TOUCH_IDLE;
 
   return HAL_OK;
 }

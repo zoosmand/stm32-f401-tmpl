@@ -68,7 +68,10 @@ typedef struct {
   uint16_t              Y;
   uint16_t              LastX;
   uint16_t              LastY;
+  uint16_t              BounceX;
+  uint16_t              BounceY;
   uint8_t               StableCount;
+  uint8_t               Touches;
   uint32_t              Timestamp;
 } TouchContext_TypeDef;
 
@@ -76,6 +79,7 @@ typedef enum {
   TOUCH_IDLE,
   TOUCH_DOWN,
   TOUCH_HOLD,
+  TOUCH_RELEASE,
   TOUCH_UP,
   TOUCH_DEBOUNCE,
   TOUCH_ACTIVE,
@@ -83,11 +87,20 @@ typedef enum {
   TOUCH_DISABLED,
 } TouchState_t;
 
+typedef enum {
+  TOUCH_ON_DOWN,
+  TOUCH_ON_UP,
+  TOUCH_ON_MOVE,
+  TOUCH_ON_HOLD,
+  TOUCH_ON_IDLE,
+} TouchEvent_t;
+
 typedef struct {
   uint16_t              Model;
   uint8_t               Orientation;
   TouchContext_TypeDef* Context;
   TouchState_t          State;
+  TouchEvent_t          Event;
   uint32_t*             Bus;
   uint8_t               BusAddr;
   HAL_StatusTypeDef     (*Callback)(uint32_t*);
