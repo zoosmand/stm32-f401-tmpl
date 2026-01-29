@@ -71,6 +71,7 @@ typedef struct {
   uint16_t              BounceX;
   uint16_t              BounceY;
   uint8_t               StableCount;
+  uint8_t               ReleaseCount;
   uint8_t               Touches;
   uint32_t              Timestamp;
 } TouchContext_TypeDef;

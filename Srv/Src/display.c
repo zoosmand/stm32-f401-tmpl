@@ -33,7 +33,12 @@ static __IO uint32_t step = 0;
 
 
 static void on_down(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
+  //
+}
 
+
+
+static void on_up(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
   Font_TypeDef font = {
     .Bgcolor      = COLOR_BLUE,
     .Color        = COLOR_LIME,
@@ -43,16 +48,15 @@ static void on_down(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
     .BytesPerGlif = 96,
   };
 
+  Display_DrawVLine(screen, touch->Context->LastX, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
+  Display_DrawHLine(screen, 0, touch->Context->LastY, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
+
   char position[16];
   sprintf(position, "x:%i y:%i\n", touch->Context->X, touch->Context->Y); 
   Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
   Display_PrintString(screen, 40, 80, &font, position);
 
-
-  Display_DrawVLine(screen, touch->Context->LastX, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
   Display_DrawVLine(screen, touch->Context->X, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
-  
-  Display_DrawHLine(screen, 0, touch->Context->LastY, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
   Display_DrawHLine(screen, 0, touch->Context->Y, DISPLAY_WIDTH, 2, COLOR_WHITE, FRONT);
 
   touch->Context->LastX = touch->Context->X;
@@ -60,14 +64,13 @@ static void on_down(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
 
 }
 
-
-
-static void on_up(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
-
+static void on_move(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
+  //
 }
 
-static void on_move(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
 
+static void on_hold(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
+  //
 }
 
 
@@ -84,25 +87,19 @@ void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
 
   switch (touch->Event) {
     case TOUCH_ON_DOWN:
-      __NOP();
-      // touch->Event = TOUCH_ON_UP;
-      // touch->State = TOUCH_IDLE;
+      on_down(screen, touch);
       break;
     
     case TOUCH_ON_UP:
-      on_down(screen, touch);
-      touch->Event = TOUCH_ON_IDLE;
-      touch->State = TOUCH_IDLE;
+      on_up(screen, touch);
       break;
     
     case TOUCH_ON_HOLD:
-      __NOP();
+      on_hold(screen, touch);
       break;
     
     case TOUCH_ON_MOVE:
-      __NOP();
-      // touch->Event = TOUCH_ON_IDLE;
-      // touch->State = TOUCH_IDLE;
+      on_move(screen, touch);
       break;
     
     case TOUCH_ON_IDLE:
