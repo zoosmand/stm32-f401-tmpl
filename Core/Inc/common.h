@@ -58,9 +58,6 @@ typedef struct {
 
 
 typedef struct {
-  // uint8_t               touches;
-  // uint16_t x;
-  // uint16_t y;
   uint8_t               Event;   // 0=down, 1=up, 2=contact
   uint16_t              RawX;
   uint16_t              RawY;

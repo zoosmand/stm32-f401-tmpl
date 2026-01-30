@@ -198,6 +198,7 @@ HAL_StatusTypeDef __attribute__((weak)) TouchScreen_Process(TouchScreen_TypeDef*
         dev->Context->StableCount = 0;
         dev->Context->BounceX = 0;
         dev->Context->BounceY = 0;
+        dev->Context->ReleaseCount = 0;
         break;
       }
       if (abs(dev->Context->X - dev->Context->BounceX) <= TOUCH_MOVE_THRESHOLD &&
@@ -226,15 +227,25 @@ HAL_StatusTypeDef __attribute__((weak)) TouchScreen_Process(TouchScreen_TypeDef*
 
     case TOUCH_ACTIVE:
       if (dev->Context->StableCount >= TOUCH_STABLE_COUNT) {
-        dev->State = TOUCH_DOWN;
-        dev->Event = TOUCH_ON_DOWN;
-        dev->Context->StableCount = 0;
+        dev->Context->TouchCount++;
+        if (dev->Context->TouchCount > 1) {
+          if (dev->Context->TouchCount > 5) {
+            dev->State = TOUCH_HOLD;
+            dev->Event = TOUCH_ON_HOLD;
+            dev->Context->TouchCount = 0;
+          }
+        } else {
+          dev->State = TOUCH_DOWN;
+          dev->Event = TOUCH_ON_DOWN;
+          dev->Context->StableCount = 0;
+          dev->Context->TouchCount = 0;
+        }
       }
       break;
       
     case TOUCH_RELEASE:
       dev->Context->ReleaseCount++;
-      if (dev->Context->ReleaseCount >= TOUCH_RELEASE_COUNT) {
+      if (dev->Context->ReleaseCount > TOUCH_RELEASE_COUNT) {
         dev->State = TOUCH_IDLE;
         dev->Event = TOUCH_ON_IDLE;
         dev->Context->ReleaseCount = 0;
@@ -245,7 +256,7 @@ HAL_StatusTypeDef __attribute__((weak)) TouchScreen_Process(TouchScreen_TypeDef*
       
     case TOUCH_DOWN:
       dev->Context->ReleaseCount++;
-      if (dev->Context->ReleaseCount >= TOUCH_RELEASE_COUNT) {
+      if (dev->Context->ReleaseCount > TOUCH_RELEASE_COUNT) {
         dev->State = TOUCH_RELEASE;
         dev->Event = TOUCH_ON_UP;
         dev->Context->ReleaseCount = 0;
@@ -254,16 +265,17 @@ HAL_StatusTypeDef __attribute__((weak)) TouchScreen_Process(TouchScreen_TypeDef*
       }
       break;
 
-    // case TOUCH_HOLD:
-    //   dev->Context->ReleaseCount++;
-    //   if (dev->Context->ReleaseCount >= (TOUCH_RELEASE_COUNT * 20)) {
-    //     dev->State = TOUCH_RELEASE;
-    //     dev->Event = TOUCH_ON_HOLD;
-    //     dev->Context->ReleaseCount = 0;
-    //   } else {
-    //     dev->Event = TOUCH_ON_IDLE;
-    //   }
-    //   break;
+    /* TODO Fix On Hold event */
+    case TOUCH_HOLD:
+      dev->Context->ReleaseCount++;
+      if (dev->Context->ReleaseCount > (TOUCH_RELEASE_COUNT * 20)) {
+        dev->State = TOUCH_RELEASE;
+        dev->Event = TOUCH_ON_HOLD;
+        dev->Context->ReleaseCount = 0;
+      } else {
+        dev->Event = TOUCH_ON_IDLE;
+      }
+      break;
 
     default:
       break;
