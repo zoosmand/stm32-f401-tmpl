@@ -73,7 +73,8 @@ typedef struct {
   uint8_t               StableCount;
   uint8_t               ReleaseCount;
   uint8_t               Touches;
-  uint32_t              Timestamp;
+  uint32_t              Threshold;
+  uint32_t              TouchCount;
 } TouchContext_TypeDef;
 
 typedef enum {

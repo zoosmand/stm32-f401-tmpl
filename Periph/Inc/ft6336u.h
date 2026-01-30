@@ -54,10 +54,11 @@ extern "C" {
 #define TOUCH1_YH	0x05	// 1	Touch 1 Y high
 #define TOUCH1_YL	0x06	// 1	Touch 1 Y low
 
-#define TOUCH_STABLE_COUNT    3   // consecutive reads
-#define TOUCH_MOVE_THRESHOLD  3   // pixels
-#define TOUCH_RELEASE_COUNT   10
-#define TOUCH_DEADZONE        3  // pixels
+#define TOUCH_STABLE_COUNT          3   // consecutive reads
+#define TOUCH_MOVE_THRESHOLD        3   // pixels
+#define TOUCH_RELEASE_COUNT         5   // consecutive reads
+#define TOUCH_DEADZONE              3   // pixels
+#define TOUCH_RELEASE_THRESHOLD     500 // ms
 
 
 
