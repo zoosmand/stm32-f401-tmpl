@@ -35,7 +35,7 @@ extern "C" {
 // 0x08 - BRG
 #define ORIENTATION       (0x80 | 0x00)
 
-#if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
+#if (ORIENTATION == 0x80) || (ORIENTATION == 0x00)
   #define DISPLAY_WIDTH   320
   #define DISPLAY_HEIGHT  480
 #endif

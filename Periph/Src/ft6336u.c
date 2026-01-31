@@ -147,22 +147,24 @@ static void tc_map_to_display(TouchScreen_TypeDef* dev) {
 
   switch (dev->Orientation & 0xf0) {
     case 0x40:
-      dev->Context->Y = dev->Context->RawX;
       dev->Context->X = dev->Context->RawY;
+      dev->Context->Y = dev->Context->RawX;
       break;
     
     case 0x80:
-      dev->Context->Y = DISPLAY_HEIGHT - dev->Context->RawX;
       dev->Context->X = DISPLAY_WIDTH - dev->Context->RawY;
+      dev->Context->Y = DISPLAY_HEIGHT - dev->Context->RawX;
       break;
     
     case 0xc0:
+      dev->Context->X = dev->Context->RawX;
       dev->Context->Y = DISPLAY_HEIGHT - dev->Context->RawY;
       break;
-    
+      
     case 0x00:
     default:
       dev->Context->X = DISPLAY_WIDTH - dev->Context->RawX;
+      dev->Context->Y = dev->Context->RawY;
       break;
   }
 }

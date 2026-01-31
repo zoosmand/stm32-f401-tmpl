@@ -334,7 +334,7 @@ Display_TypeDef* ST7796_Init(void) {
   HAL_Delay(10);
 
   // clear display
-  if (Display_Fill(dev, COLOR_BLACK, FRONT) != HAL_OK) return dev;
+  if (Display_Fill(dev, COLOR_RED, FRONT) != HAL_OK) return dev;
 
   dev->Lock = DISABLE;
   return dev;
@@ -539,20 +539,71 @@ __STATIC_INLINE void prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, char c
 
   uint32_t bi = dev->PixBufActiveSize;
 
-  uint32_t pixel_count = 0;
+  uint8_t hc = 0, wc = f->Width - 1;
 
-  for (uint32_t byte = 0; byte < f->BytesPerGlif; byte++) {
-    uint8_t bits = glyph[byte];
 
-    for (uint8_t bit = 0; bit < 8; bit++) {
-      if (pixel_count >= tp) break;
-      dev->PixBuf[bi++] = (bits & 0x01) ? f->Color : f->Bgcolor;
+
+  // for (uint32_t byte = 0; byte < f->BytesPerGlif; byte++) {
+  //   uint8_t bits = glyph[byte];
+
+  //   for (uint8_t bit = 0; bit < 8; bit++) {
+
+  //     bi += wc;
+      
+  //     dev->PixBuf[bi] = (bits & 0x01) ? f->Color : f->Bgcolor;
+  //     bits >>= 1;
+
+  //     // if (wc) wc--; else break;
+  //     if (hc > (f->Height - 1)) {
+  //         hc = 0;
+  //         wc = f->Width;
+  //      } else {
+  //         hc +=8;
+  //      }
+  //   }
+  // }
+
+  uint8_t letter_r[6] = {0xfe, 0x88, 0x88, 0x88, 0x76, 0x00};
+  for (uint16_t byte = 0; byte < sizeof(letter_r); byte++) {
+    uint8_t bits = letter_r[byte];
+
+    for (uint16_t bit = 0; bit < 8; bit++) {
+      dev->PixBuf[bi] = (bits & 0x01) ? f->Color : f->Bgcolor;
       bits >>= 1;
-      pixel_count++;
+      bi++;
     }
-  }
+
+  } 
   dev->PixBufActiveSize = bi;
 }
+
+// __STATIC_INLINE void prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, char ch, uint32_t tp) {
+
+//   // shift the glyph index
+//   if ((ch < 32) || (ch > 126)) {
+//     if (ch == 176) ch = 95;
+//     else ch = 32;
+//   }
+//   ch -= 32;
+
+//   const uint8_t *glyph = f->Font + (ch * f->BytesPerGlif);
+
+//   uint32_t bi = dev->PixBufActiveSize;
+
+//   uint32_t pixel_count = 0;
+
+//   for (uint32_t byte = 0; byte < f->BytesPerGlif; byte++) {
+//     uint8_t bits = glyph[byte];
+
+//     for (uint8_t bit = 0; bit < 8; bit++) {
+//       if (pixel_count >= tp) break;
+//       dev->PixBuf[bi++] = (bits & 0x01) ? f->Color : f->Bgcolor;
+//       bits >>= 1;
+//       pixel_count++;
+//     }
+//   }
+//   dev->PixBufActiveSize = bi;
+// }
 
 
 // --------------------------------------------------------------------------
