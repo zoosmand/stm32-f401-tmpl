@@ -39,38 +39,28 @@ static void on_down(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
 
 
 static void on_up(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
-  // Font_TypeDef font = {
-  //   .Bgcolor      = COLOR_BLUE,
-  //   .Color        = COLOR_LIME,
-  //   .Font         = (uint8_t*)&font_dot_20x28,
-  //   .Height       = 32,
-  //   .Width        = 24,
-  //   .BytesPerGlif = 96,
-  // };
   Font_TypeDef font = {
     .Bgcolor      = COLOR_BLUE,
     .Color        = COLOR_LIME,
-    .Font         = (uint8_t*)&font_dot_5x7,
-    .Height       = 8,
-    .Width        = 6,
-    .BytesPerGlif = 6,
+    .Font         = (uint8_t*)&font_dot_20x28,
+    .Height       = 32,
+    .Width        = 24,
+    .BytesPerGlif = 96,
   };
 
-  Display_PrintSymbol(screen, 100, 100, &font, 'H');
+  Display_DrawVLine(screen, touch->Context->LastX, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
+  Display_DrawHLine(screen, 0, touch->Context->LastY, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
 
-  // Display_DrawVLine(screen, touch->Context->LastX, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
-  // Display_DrawHLine(screen, 0, touch->Context->LastY, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
+  char position[16];
+  sprintf(position, "x:%i y:%i\n", touch->Context->X, touch->Context->Y); 
+  Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
+  Display_PrintString(screen, 40, 80, &font, position);
 
-  // char position[16];
-  // sprintf(position, "x:%i y:%i\n", touch->Context->X, touch->Context->Y); 
-  // Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
-  // Display_PrintString(screen, 40, 80, &font, position);
+  Display_DrawVLine(screen, touch->Context->X, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
+  Display_DrawHLine(screen, 0, touch->Context->Y, DISPLAY_WIDTH, 2, COLOR_WHITE, FRONT);
 
-  // Display_DrawVLine(screen, touch->Context->X, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
-  // Display_DrawHLine(screen, 0, touch->Context->Y, DISPLAY_WIDTH, 2, COLOR_WHITE, FRONT);
-
-  // touch->Context->LastX = touch->Context->X;
-  // touch->Context->LastY = touch->Context->Y;
+  touch->Context->LastX = touch->Context->X;
+  touch->Context->LastY = touch->Context->Y;
 
 }
 

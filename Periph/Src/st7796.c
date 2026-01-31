@@ -159,22 +159,24 @@ __STATIC_INLINE void display_set_window(Display_TypeDef* dev, uint16_t x0, uint1
   uint8_t data[4];
 
   write_cmd(dev, 0x2a);
-  #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
+  #if (DISPLAY_POSITION)
+    // vertical
     data[0] = x0 >> 8; data[1] = x0 & 0xff;
     data[2] = x1 >> 8; data[3] = x1 & 0xff;
-  #endif
-  #if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
+  #else
+    // horizontal
     data[0] = y0 >> 8; data[1] = y0 & 0xff;
     data[2] = y1 >> 8; data[3] = y1 & 0xff;
   #endif
   write_data(dev, data, 4);
 
   write_cmd(dev, 0x2b);
-  #if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
+  #if (DISPLAY_POSITION)
+    // vertical
     data[0] = y0 >> 8; data[1] = y0 & 0xff;
     data[2] = y1 >> 8; data[3] = y1 & 0xff;
-  #endif
-  #if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
+  #else
+    // horizontal
     data[0] = x0 >> 8; data[1] = x0 & 0xff;
     data[2] = x1 >> 8; data[3] = x1 & 0xff;
   #endif
@@ -253,7 +255,6 @@ Display_TypeDef* ST7796_Init(void) {
 	
 	write_cmd(dev, 0x36);             // Memory Data Access Control MX, MY, RGB mode                                    
   initData[0] = ORIENTATION;        // - Orientation, RGB
-  // initData[0] = 0x48;            // - X-Mirror, Top-Left to right-Buttom, RGB
 	write_data(dev, initData, 1);      
 	
 	write_cmd(dev, 0x3a);             // Interface Pixel Format                                    
@@ -334,7 +335,7 @@ Display_TypeDef* ST7796_Init(void) {
   HAL_Delay(10);
 
   // clear display
-  if (Display_Fill(dev, COLOR_RED, FRONT) != HAL_OK) return dev;
+  if (Display_Fill(dev, COLOR_BLACK, FRONT) != HAL_OK) return dev;
 
   dev->Lock = DISABLE;
   return dev;
@@ -355,6 +356,10 @@ HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef* dev, uint1
 HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t b, uint16_t c, ImageLayer_t l) {
  
   HAL_StatusTypeDef status = HAL_OK;
+
+  #if ORIENTATION
+  #else
+  #endif
 
   if (Display_DrawVLine(dev, x, y, (w + b), b, c, l) != HAL_OK) status = HAL_ERROR;
   if (Display_DrawVLine(dev, (x + h), y, (w + b), b, c, l) != HAL_OK) status = HAL_ERROR;
@@ -539,71 +544,20 @@ __STATIC_INLINE void prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, char c
 
   uint32_t bi = dev->PixBufActiveSize;
 
-  uint8_t hc = 0, wc = f->Width - 1;
+  uint32_t pixel_count = 0;
 
+  for (uint32_t byte = 0; byte < f->BytesPerGlif; byte++) {
+    uint8_t bits = glyph[byte];
 
-
-  // for (uint32_t byte = 0; byte < f->BytesPerGlif; byte++) {
-  //   uint8_t bits = glyph[byte];
-
-  //   for (uint8_t bit = 0; bit < 8; bit++) {
-
-  //     bi += wc;
-      
-  //     dev->PixBuf[bi] = (bits & 0x01) ? f->Color : f->Bgcolor;
-  //     bits >>= 1;
-
-  //     // if (wc) wc--; else break;
-  //     if (hc > (f->Height - 1)) {
-  //         hc = 0;
-  //         wc = f->Width;
-  //      } else {
-  //         hc +=8;
-  //      }
-  //   }
-  // }
-
-  uint8_t letter_r[6] = {0xfe, 0x88, 0x88, 0x88, 0x76, 0x00};
-  for (uint16_t byte = 0; byte < sizeof(letter_r); byte++) {
-    uint8_t bits = letter_r[byte];
-
-    for (uint16_t bit = 0; bit < 8; bit++) {
-      dev->PixBuf[bi] = (bits & 0x01) ? f->Color : f->Bgcolor;
+    for (uint8_t bit = 0; bit < 8; bit++) {
+      if (pixel_count >= tp) break;
+      dev->PixBuf[bi++] = (bits & 0x01) ? f->Color : f->Bgcolor;
       bits >>= 1;
-      bi++;
+      pixel_count++;
     }
-
-  } 
+  }
   dev->PixBufActiveSize = bi;
 }
-
-// __STATIC_INLINE void prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, char ch, uint32_t tp) {
-
-//   // shift the glyph index
-//   if ((ch < 32) || (ch > 126)) {
-//     if (ch == 176) ch = 95;
-//     else ch = 32;
-//   }
-//   ch -= 32;
-
-//   const uint8_t *glyph = f->Font + (ch * f->BytesPerGlif);
-
-//   uint32_t bi = dev->PixBufActiveSize;
-
-//   uint32_t pixel_count = 0;
-
-//   for (uint32_t byte = 0; byte < f->BytesPerGlif; byte++) {
-//     uint8_t bits = glyph[byte];
-
-//     for (uint8_t bit = 0; bit < 8; bit++) {
-//       if (pixel_count >= tp) break;
-//       dev->PixBuf[bi++] = (bits & 0x01) ? f->Color : f->Bgcolor;
-//       bits >>= 1;
-//       pixel_count++;
-//     }
-//   }
-//   dev->PixBufActiveSize = bi;
-// }
 
 
 // --------------------------------------------------------------------------

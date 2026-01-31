@@ -29,21 +29,20 @@ extern "C" {
 
 #include "main.h"
 
-// 0x00 or 0xc0 - vertical
+// 0x20 or 0xe0 - vertical
 // 0x40 or 0x80 - horizontal
 // 0x00 - RGB
 // 0x08 - BRG
 #define ORIENTATION       (0x80 | 0x00)
 
-#if (ORIENTATION == 0x80) || (ORIENTATION == 0x00)
-  #define DISPLAY_WIDTH   320
-  #define DISPLAY_HEIGHT  480
+#if ((ORIENTATION >> 6) < 3 && (ORIENTATION >> 6) != 0)
+  #define DISPLAY_POSITION 0 // horizontal
+#else
+  #define DISPLAY_POSITION 1 // vertical
 #endif
 
-#if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
-  #define DISPLAY_WIDTH   480
-  #define DISPLAY_HEIGHT  320
-#endif
+#define DISPLAY_WIDTH   480
+#define DISPLAY_HEIGHT  320
 
 
 /* Define colors*/

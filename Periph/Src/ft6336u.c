@@ -156,12 +156,12 @@ static void tc_map_to_display(TouchScreen_TypeDef* dev) {
       dev->Context->Y = DISPLAY_HEIGHT - dev->Context->RawX;
       break;
     
-    case 0xc0:
+    case 0xe0:
       dev->Context->X = dev->Context->RawX;
       dev->Context->Y = DISPLAY_HEIGHT - dev->Context->RawY;
       break;
       
-    case 0x00:
+    case 0x20:
     default:
       dev->Context->X = DISPLAY_WIDTH - dev->Context->RawX;
       dev->Context->Y = dev->Context->RawY;
