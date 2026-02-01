@@ -56,16 +56,16 @@ static void on_up(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
   //   .BytesPerGlif = 6,
   // };
 
-  // Display_PrintSymbol(screen, 100, 100, &font, 'H');
+  Display_PrintSymbol(screen, 100, 150, &font, 'R');
 
   // Display_DrawVLine(screen, touch->Context->LastX, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
   Display_DrawHLine(screen, 0, touch->Context->LastY, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
 
-  // char position[16];
-  // sprintf(position, "x:%i y:%i\n", touch->Context->X, touch->Context->Y); 
-  // Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
-  // // Display_PrintString(screen, 40, 80, &font, position);
-  Display_PrintString(screen, 40, 80, &font, "LR\n");
+  char position[16];
+  sprintf(position, "x:%i y:%i\n", touch->Context->X, touch->Context->Y); 
+  Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, COLOR_BLACK, FRONT);
+  Display_PrintString(screen, 10, 80, &font, position);
+  // Display_PrintString(screen, 40, 280, &font, "LR\n");
 
   // Display_DrawVLine(screen, touch->Context->X, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
   Display_DrawHLine(screen, 0, touch->Context->Y, DISPLAY_WIDTH, 2, COLOR_WHITE, FRONT);

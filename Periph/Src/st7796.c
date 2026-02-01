@@ -375,11 +375,6 @@ HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef* d
 
 HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t c, ImageLayer_t l) {
 
-  // uint16_t rw = w + x;
-  // uint16_t rh = h + y;
-  // if (rw > dev->Width) return HAL_ERROR;
-  // if (rh > dev->Height) return HAL_ERROR;
-  
   uint16_t rw, rh, rx, ry;
 
   #if DISPLAY_POSITION
@@ -583,11 +578,24 @@ __STATIC_INLINE void prepare_glyph(Display_TypeDef* dev, Font_TypeDef* f, char c
 
 HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef* dev, uint16_t x, uint16_t y, Font_TypeDef* f, char ch) {
 
-  uint16_t rw = x + f->Width;
-  uint16_t rh = y + f->Height;
-  if (rw > dev->Width || rh > dev->Height) return (HAL_ERROR);
+  uint16_t rh, rw, rx, ry;
 
-  display_set_window(dev, x, y, rw - 1, rh - 1, WRITE);
+  #if DISPLAY_POSITION
+    rx = y;
+    ry = x;
+    rw = rx + f->Height;
+    rh = ry + f->Width;
+    if (rw > dev->Width || rh > dev->Height) return (HAL_ERROR);
+  #else
+    rx = x;
+    ry = y;
+    rw = rx + f->Width;
+    rh = ry + f->Height;
+    if (rw > dev->Width || rh > dev->Height) return (HAL_ERROR);
+  #endif
+    
+  display_set_window(dev, rx, ry, rw - 1, rh - 1, WRITE);
+  
   const uint32_t total_pixels = f->Width * f->Height;
 
   dev->PixBufActiveSize = 0;
@@ -609,25 +617,46 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
 
   if (!str || !f) return HAL_ERROR;
 
+  uint16_t x_shift, y_shift, rw, rh, rx, ry;
+
+  #if DISPLAY_POSITION
+    rh = f->Width;
+    rw = f->Height;
+    rx = y;
+    ry = x;
+    x_shift = rx;
+    y_shift = ry;
+  #else
+    rh = f->Height;
+    rw = f->Width;
+    rx = x;
+    ry = y;
+    x_shift = rx;
+  #endif
+
   uint16_t char_count = 0;
-  uint16_t x_shift = x;
-  // uint32_t buf_idx = 0;
 
   while (str[char_count++] != '\n') {
     if (char_count > 64) break;
   }
-
-  char_count--;
+  char_count--; // cut 0x0a
   
-  uint32_t chunk = PIX_BUF_SZ / (f->Width * f->Height);
-  uint32_t total_pixels = f->Width * f->Height * chunk;
+  uint32_t chunk = PIX_BUF_SZ / (rw * rh);
+  uint32_t total_pixels = rw * rh * chunk;
   
   for (uint8_t i = 1; i <= (char_count / chunk); i++) {
 
-    display_set_window(dev, x_shift, y, (x_shift + (chunk * f->Width) - 1), (y + f->Height - 1), WRITE);
-    x_shift += chunk * f->Width;
-
-    if (x_shift > dev->Width) return (HAL_OK);
+    
+    #if DISPLAY_POSITION
+      display_set_window(dev, x_shift, y_shift, (x_shift + rw - 1), ((chunk * rh) + y_shift - 1), WRITE);
+      // display_set_window(dev, x_shift, y_shift, (x_shift + (chunk * rw) - 1), (ry + rh - 1), WRITE);
+      x_shift += chunk * rw;
+      if (x_shift > rw) return (HAL_OK);
+    #else
+      display_set_window(dev, x_shift, y_shift, (x_shift + (chunk * rw) - 1), (ry + rh - 1), WRITE);
+      x_shift += chunk * rw;
+      if (x_shift > rw) return (HAL_OK);
+    #endif
 
     dev->PixBufActiveSize = 0;
     for (uint8_t j = 0; j < chunk; j++) {
@@ -641,10 +670,14 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
   uint16_t str_rest = char_count % chunk;
   if (str_rest) {
 
-    display_set_window(dev, x_shift, y, (x_shift + (str_rest * f->Width) - 1), (y + f->Height - 1), WRITE);
+    #if DISPLAY_POSITION
+      display_set_window(dev, x_shift, y_shift, (x_shift + rw - 1), ((str_rest * rh) + y_shift - 1), WRITE);
+    #else
+      display_set_window(dev, x_shift, y_shift, (x_shift + (str_rest * rw) - 1), (ry + rh - 1), WRITE);
+    #endif
 
     dev->PixBufActiveSize = 0;
-    total_pixels = f->Width * f->Height * str_rest;
+    total_pixels = rw * rh * str_rest;
 
     for (uint8_t j = 0; j < str_rest; j++) {
       prepare_glyph(dev, f, str[char_count - str_rest + j], total_pixels);
