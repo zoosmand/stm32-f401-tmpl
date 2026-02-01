@@ -37,12 +37,14 @@ extern "C" {
 
 #if ((ORIENTATION >> 6) < 3 && (ORIENTATION >> 6) != 0)
   #define DISPLAY_POSITION 0 // horizontal
+  #define DISPLAY_WIDTH   480
+  #define DISPLAY_HEIGHT  320
 #else
   #define DISPLAY_POSITION 1 // vertical
+  #define DISPLAY_WIDTH   320
+  #define DISPLAY_HEIGHT  480
 #endif
 
-#define DISPLAY_WIDTH   480
-#define DISPLAY_HEIGHT  320
 
 
 /* Define colors*/

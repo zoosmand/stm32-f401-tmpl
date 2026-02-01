@@ -375,11 +375,30 @@ HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef* d
 
 HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef* dev, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t c, ImageLayer_t l) {
 
-  uint16_t rw = w + x;
-  uint16_t rh = h + y;
-  if (rw > dev->Width) return HAL_ERROR;
-  if (rh > dev->Height) return HAL_ERROR;
-  display_set_window(dev, x, y, (rw - 1), (rh - 1), WRITE);
+  // uint16_t rw = w + x;
+  // uint16_t rh = h + y;
+  // if (rw > dev->Width) return HAL_ERROR;
+  // if (rh > dev->Height) return HAL_ERROR;
+  
+  uint16_t rw, rh, rx, ry;
+
+  #if DISPLAY_POSITION
+    rx = y;
+    ry = x;
+    rw = h + rx;
+    rh = w + ry;
+    if (rw > dev->Height) return HAL_ERROR;
+    if (rh > dev->Width) return HAL_ERROR;
+  #else
+    rw = w + x;
+    rh = h + y;
+    rx = x;
+    ry = y;
+    if (rw > dev->Width) return HAL_ERROR;
+    if (rh > dev->Height) return HAL_ERROR;
+  #endif
+
+  display_set_window(dev, rx, ry, (rw - 1), (rh - 1), WRITE);
 
   /* prepare color & optimize buffer filler */
   uint32_t total = h * w;
