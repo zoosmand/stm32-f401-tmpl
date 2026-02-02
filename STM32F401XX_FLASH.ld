@@ -164,12 +164,21 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT> FLASH
 
-  .dma_buffer (NOLOAD) :
+  .dma_buffer_write (NOLOAD) :
   {
     . = ALIGN(4);
-    PROVIDE(__dma_buffer_start__ = .);
-    *(.dma_buffer)
-    PROVIDE(__dma_buffer_end__ = .);
+    PROVIDE(__dma_buffer_write_start__ = .);
+    *(.dma_buffer_write)
+    PROVIDE(__dma_buffer_write_end__ = .);
+    . = ALIGN(4);
+  } >RAM
+
+  .dma_buffer_read (NOLOAD) :
+  {
+    . = ALIGN(4);
+    PROVIDE(__dma_buffer_read_start__ = .);
+    *(.dma_buffer_read)
+    PROVIDE(__dma_buffer_read_end__ = .);
     . = ALIGN(4);
   } >RAM
 

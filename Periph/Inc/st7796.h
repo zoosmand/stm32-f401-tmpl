@@ -29,21 +29,22 @@ extern "C" {
 
 #include "main.h"
 
-// 0x00 or 0xc0 - vertical
+// 0x20 or 0xe0 - vertical
 // 0x40 or 0x80 - horizontal
 // 0x00 - RGB
 // 0x08 - BRG
 #define ORIENTATION       (0x80 | 0x00)
 
-#if (ORIENTATION == 0xc0) || (ORIENTATION == 0x00)
+#if ((ORIENTATION >> 6) < 3 && (ORIENTATION >> 6) != 0)
+  #define DISPLAY_POSITION 0 // horizontal
+  #define DISPLAY_WIDTH   480
+  #define DISPLAY_HEIGHT  320
+#else
+  #define DISPLAY_POSITION 1 // vertical
   #define DISPLAY_WIDTH   320
   #define DISPLAY_HEIGHT  480
 #endif
 
-#if (ORIENTATION == 0x40) || (ORIENTATION == 0x80)
-  #define DISPLAY_WIDTH   480
-  #define DISPLAY_HEIGHT  320
-#endif
 
 
 /* Define colors*/
@@ -57,7 +58,7 @@ extern "C" {
 #define COLOR_LIME        (uint16_t)(COLOR_GREEN | COLOR_RED)
 
 
-#define PIX_BUF_SZ        8192U  // words (1024 pixels)
+#define PIX_BUF_SZ        4096U  // words (4096 pixels)
 
 #define TFT_CS_GPIO_Port  GPIOA
 #define TFT_CS_Pin        GPIO_PIN_4
@@ -73,23 +74,25 @@ extern "C" {
 // #define TFT_BL_Pin       GPIO_PIN_10   // optional (or tie to VCC)
 
 
-extern uint8_t __dma_buffer_start__;
-extern uint8_t __dma_buffer_end__;
+extern uint8_t __dma_buffer_write_start__;
+extern uint8_t __dma_buffer_write_end__;
 
 
 Display_TypeDef* ST7796_Init(void);
 
 
 
-HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef*, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawPixel(Display_TypeDef*, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawVLine(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawHLine(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawCircle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef*, uint16_t, ImageLayer_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_DrawPixel(Display_TypeDef*, uint16_t, uint16_t, uint16_t, ImageLayer_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_DrawVLine(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_DrawHLine(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_DrawCircle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
 
+HAL_StatusTypeDef __attribute__((weak)) Display_FillBackground(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t);
+HAL_StatusTypeDef __attribute__((weak)) Display_ReadRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t);
 
 HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef*, uint16_t, uint16_t, Font_TypeDef*, char);
 HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef*, uint16_t, uint16_t, Font_TypeDef*, const char*);

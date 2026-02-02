@@ -35,9 +35,14 @@ typedef struct {
   uint16_t              Model;
   uint16_t              Width;
   uint16_t              Height;
+  uint8_t               Orientation;
   uint32_t*             Bus;
   uint16_t*             PixBuf;
-  uint16_t              PixBufSize;
+  uint32_t              PixBufSize;
+  uint32_t              PixBufActiveSize;
+  uint16_t*             PixBufBg;
+  uint32_t              PixBufBgSize;
+  uint32_t              PixBufBgActiveSize;
   HAL_StatusTypeDef     (*Callback)(uint32_t*);
 } Display_TypeDef;
 
@@ -53,31 +58,65 @@ typedef struct {
 
 
 typedef struct {
-  uint8_t  touches;
-  uint16_t x;
-  uint16_t y;
-  uint8_t  event;   // 0=down, 1=up, 2=contact
-} TouchState_TypeDef;
+  uint8_t               Event;   // 0=down, 1=up, 2=contact
+  uint16_t              RawX;
+  uint16_t              RawY;
+  uint16_t              X;
+  uint16_t              Y;
+  uint16_t              LastX;
+  uint16_t              LastY;
+  uint16_t              BounceX;
+  uint16_t              BounceY;
+  uint8_t               StableCount;
+  uint8_t               ReleaseCount;
+  uint8_t               Touches;
+  uint32_t              Threshold;
+  uint32_t              TouchCount;
+} TouchContext_TypeDef;
 
 typedef enum {
   TOUCH_IDLE,
   TOUCH_DOWN,
   TOUCH_HOLD,
+  TOUCH_RELEASE,
   TOUCH_UP,
+  TOUCH_DEBOUNCE,
+  TOUCH_ACTIVE,
   TOUCH_LOCKED,
   TOUCH_DISABLED,
-} TouchPhase_t;
+} TouchState_t;
+
+typedef enum {
+  TOUCH_ON_DOWN,
+  TOUCH_ON_UP,
+  TOUCH_ON_MOVE,
+  TOUCH_ON_HOLD,
+  TOUCH_ON_IDLE,
+} TouchEvent_t;
 
 typedef struct {
-  TouchState_TypeDef*   State;
   uint16_t              Model;
-  TouchPhase_t          Phase;
+  uint8_t               Orientation;
+  TouchContext_TypeDef* Context;
+  TouchState_t          State;
+  TouchEvent_t          Event;
   uint32_t*             Bus;
   uint8_t               BusAddr;
   HAL_StatusTypeDef     (*Callback)(uint32_t*);
 } TouchScreen_TypeDef;
 
 
+typedef enum {
+  WRITE = 0,
+  READ  = 1,
+  NOOP  = 2  
+} TrasmissionDirection_t;
+
+typedef enum {
+  FRONT = 0,
+  BACK  = 1,
+  NONE  = 2  
+} ImageLayer_t;
 
 
 #ifdef __cplusplus

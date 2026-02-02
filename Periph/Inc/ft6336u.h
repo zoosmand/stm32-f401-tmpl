@@ -54,23 +54,20 @@ extern "C" {
 #define TOUCH1_YH	0x05	// 1	Touch 1 Y high
 #define TOUCH1_YL	0x06	// 1	Touch 1 Y low
 
-// uint16_t x = ((xh & 0x0F) << 8) | xl;
-// uint16_t y = ((yh & 0x0F) << 8) | yl;
+#define TOUCH_STABLE_COUNT          3   // consecutive reads
+#define TOUCH_MOVE_THRESHOLD        3   // pixels
+#define TOUCH_RELEASE_COUNT         5   // consecutive reads
+#define TOUCH_DEADZONE              3   // pixels
+#define TOUCH_RELEASE_THRESHOLD     500 // ms
 
 
 
 TouchScreen_TypeDef* FT6336U_Init(void);
 
-HAL_StatusTypeDef TouchScrean_Read(TouchScreen_TypeDef*);
-
-void TouchScreen_MapToDisplay(uint16_t*, uint16_t*, uint16_t);
+HAL_StatusTypeDef __attribute__((weak)) TouchScreen_Process(TouchScreen_TypeDef* dev);
 
 
 
-#define TOUCH_DEADZONE 3  // pixels
-
-// abs(x - last_x) < TOUCH_DEADZONE &&
-// abs(y - last_y) < TOUCH_DEADZONE
 
 
 
