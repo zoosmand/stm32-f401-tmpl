@@ -632,6 +632,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
     rx = x;
     ry = y;
     x_shift = rx;
+    y_shift = ry;
   #endif
 
   uint16_t char_count = 0;
@@ -649,13 +650,12 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
     
     #if DISPLAY_POSITION
       display_set_window(dev, x_shift, y_shift, (x_shift + rw - 1), ((chunk * rh) + y_shift - 1), WRITE);
-      // display_set_window(dev, x_shift, y_shift, (x_shift + (chunk * rw) - 1), (ry + rh - 1), WRITE);
-      x_shift += chunk * rw;
-      if (x_shift > rw) return (HAL_OK);
+      y_shift += chunk * rh;
+      if (y_shift > dev->Width) return HAL_OK;
     #else
       display_set_window(dev, x_shift, y_shift, (x_shift + (chunk * rw) - 1), (ry + rh - 1), WRITE);
       x_shift += chunk * rw;
-      if (x_shift > rw) return (HAL_OK);
+      if (x_shift > dev->Width) return HAL_OK;
     #endif
 
     dev->PixBufActiveSize = 0;
