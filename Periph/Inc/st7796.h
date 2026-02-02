@@ -33,7 +33,7 @@ extern "C" {
 // 0x40 or 0x80 - horizontal
 // 0x00 - RGB
 // 0x08 - BRG
-#define ORIENTATION       (0x80 | 0x00)
+#define ORIENTATION       (0xe0 | 0x00)
 
 #if ((ORIENTATION >> 6) < 3 && (ORIENTATION >> 6) != 0)
   #define DISPLAY_POSITION 0 // horizontal
