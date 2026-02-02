@@ -21,7 +21,7 @@
 
 #define SIMPLE_PAUSE 1000U;
 
-extern uint8_t touch_event;
+extern TouchState_t touch_activated_flag;
 
 static __IO uint32_t step = 0;
 
@@ -32,32 +32,18 @@ static __IO uint32_t step = 0;
 /////////////////////////////////////////////////////////////////////////////
 
 
+// --------------------------------------------------------------------------
+
+static void on_down(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
+  //
+}
+
 
 
 
 // --------------------------------------------------------------------------
 
-void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
-
-  if (screen->Lock == ENABLE) return;
-
-  switch (touch->Phase){
-    case TOUCH_DISABLED:
-      return;
-
-    case TOUCH_IDLE:
-      if (!touch_event) return;
-      touch_event = 0;
-      TouchScrean_Read(touch);
-      __NOP();
-      break;
-      
-    default:
-      touch_event = 0;
-      return;
-  }
-
-
+static void on_up(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
   // Font_TypeDef font = {
   //   .Bgcolor      = COLOR_BLUE,
   //   .Color        = COLOR_LIME,
@@ -66,55 +52,83 @@ void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
   //   .Width        = 24,
   //   .BytesPerGlif = 96,
   // };
+  Font_TypeDef font = {
+    .Bgcolor      = COLOR_BLUE,
+    .Color        = COLOR_LIME,
+    .Font         = (uint8_t*)&font_dot_10x14,
+    .Height       = 16,
+    .Width        = 12,
+    .BytesPerGlif = 24,
+  };
 
-  // Font_TypeDef font2 = {
-  //   .Bgcolor      = COLOR_BLUE,
-  //   .Color        = COLOR_LIME,
-  //   .Font         = (uint8_t*)&font_dot_5x7,
-  //   .Height       = 8,
-  //   .Width        = 6,
-  //   .BytesPerGlif = 6,
-  // };
+  // Display_PrintSymbol(screen, 100, 150, &font, 'R');
+
+  Display_DrawVLine(screen, touch->Context->LastX, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
+  Display_DrawHLine(screen, 0, touch->Context->LastY, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
+
+  char position[20];
+  sprintf(position, "x:%d y:%d\n", touch->Context->X, touch->Context->Y); 
+  Display_FillRectangle(screen, 40, 80, (font.Width * 10), font.Height, COLOR_BLACK, FRONT);
+  Display_PrintString(screen, 10, 80, &font, position);
+
+  Display_DrawVLine(screen, touch->Context->X, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
+  Display_DrawHLine(screen, 0, touch->Context->Y, DISPLAY_WIDTH, 2, COLOR_WHITE, FRONT);
+
+  touch->Context->LastX = touch->Context->X;
+  touch->Context->LastY = touch->Context->Y;
+}
 
 
-  // uint16_t color = (uint16_t)(rand() & 0xffff);
 
-  static uint16_t ptx; 
-  static uint16_t pty; 
-  uint16_t tx = touch->State->x;
-  uint16_t ty = touch->State->y;
-  TouchScreen_MapToDisplay(&tx, &ty, ORIENTATION);
+// --------------------------------------------------------------------------
 
-  Display_DrawVLine(screen, ptx, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK);
-  Display_DrawVLine(screen, tx, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE);
-  
-  Display_DrawHLine(screen, 0, pty, DISPLAY_WIDTH, 2, COLOR_BLACK);
-  Display_DrawHLine(screen, 0, ty, DISPLAY_WIDTH, 2, COLOR_WHITE);
+static void on_move(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
+  //
+}
 
-  ptx = tx;
-  pty = ty;
 
-  // font.Color = color;
-  // font.Bgcolor = ~color;
 
-  // char position[16];
-  // sprintf(position, "x:%i y:%i\n", touch->State->x, touch->State->y); 
-  // Display_FillRectangle(screen, 40, 180, (font.Width * 16), font.Height, 0x0000);
-  // Display_PrintString(screen, 40, 180, &font, position);
 
-  // char position2[16];
-  // uint16_t tx = touch->State->x;
-  // uint16_t ty = touch->State->y;
-  // TouchScreen_MapToDisplay(&tx, &ty, ORIENTATION);
-  // sprintf(position2, "x:%i y:%i\n", tx, ty); 
-  // Display_FillRectangle(screen, 40, 80, (font.Width * 16), font.Height, 0x0000);
-  // Display_PrintString(screen, 40, 80, &font, position2);
+// --------------------------------------------------------------------------
 
-  // Display_PrintString(screen, 40, 180, &font, "CoroiscreO!8672854\n");
-  // Display_PrintString(screen, 40, 86, &font2, "1234567890123456789012345678901234567890123456789012345678901234567890\n");
+static void on_hold(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
+  //
+}
 
-  touch->Phase = TOUCH_IDLE;
 
+
+
+// --------------------------------------------------------------------------
+
+void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
+
+  if (screen->Lock == ENABLE) return;
+  if (touch_activated_flag != TOUCH_ACTIVE) return;
+
+  TouchScreen_Process(touch);
+
+  switch (touch->Event) {
+    case TOUCH_ON_DOWN:
+      on_down(screen, touch);
+      break;
+    
+    case TOUCH_ON_UP:
+      on_up(screen, touch);
+      break;
+    
+    case TOUCH_ON_HOLD:
+      on_hold(screen, touch);
+      break;
+    
+    case TOUCH_ON_MOVE:
+      on_move(screen, touch);
+      break;
+    
+    case TOUCH_ON_IDLE:
+      default:
+      __NOP();
+      break;
+  }
 }
 
 
