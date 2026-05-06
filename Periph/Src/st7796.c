@@ -649,7 +649,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
 
     
     #if DISPLAY_POSITION
-      display_set_window(dev, x_shift, y_shift, (x_shift + rw - 1), ((chunk * rh) + y_shift - 1), WRITE);
+      display_set_window(dev, x_shift, y_shift, (x_shift + rw - 1), ((chunk * rh) + ry - 1), WRITE);
       y_shift += chunk * rh;
       if (y_shift > dev->Width) return HAL_OK;
     #else
@@ -671,7 +671,7 @@ HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef *dev
   if (str_rest) {
 
     #if DISPLAY_POSITION
-      display_set_window(dev, x_shift, y_shift, (x_shift + rw - 1), ((str_rest * rh) + y_shift - 1), WRITE);
+      display_set_window(dev, x_shift, y_shift, (x_shift + rw - 1), ((str_rest * rh) + ry - 1), WRITE);
     #else
       display_set_window(dev, x_shift, y_shift, (x_shift + (str_rest * rw) - 1), (ry + rh - 1), WRITE);
     #endif
