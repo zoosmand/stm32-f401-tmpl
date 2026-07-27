@@ -88,17 +88,19 @@ void _delay_ms(uint32_t);
 #define ETH_IN_GPIO_Port GPIOB
 #define ETH_RESET_Pin GPIO_PIN_1
 #define ETH_RESET_GPIO_Port GPIOB
-#define ETH_CS_Pin GPIO_PIN_12
-#define ETH_CS_GPIO_Port GPIOB
-#define TC_RST_Pin GPIO_PIN_5
+#define TC_RST_Pin GPIO_PIN_2
 #define TC_RST_GPIO_Port GPIOB
+#define ETH_CS_Pin GPIO_PIN_15
+#define ETH_CS_GPIO_Port GPIOA
 #define SD_CS_Pin GPIO_PIN_8
 #define SD_CS_GPIO_Port GPIOB
 #define TC_INT_Pin GPIO_PIN_9
 #define TC_INT_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+#define TC_INT_Pin_Pos    9
 #define DSPL_OUT
+
 
 /* USER CODE END Private defines */
 

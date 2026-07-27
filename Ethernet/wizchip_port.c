@@ -14,7 +14,7 @@
 #include "DHCP/dhcp.h"
 #include "DNS/dns.h"
 
-#define W5500_SPI hspi2
+#define W5500_SPI hspi3
 #define LOG_UART  huart1
 #define USE_DHCP  1
 
