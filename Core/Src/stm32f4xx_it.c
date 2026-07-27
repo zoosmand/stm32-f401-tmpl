@@ -62,7 +62,7 @@ extern DMA_HandleTypeDef hdma_spi1_tx;
 extern DMA_HandleTypeDef hdma_spi2_rx;
 extern DMA_HandleTypeDef hdma_spi2_tx;
 /* USER CODE BEGIN EV */
-extern EXTI_HandleTypeDef exti_line_9;
+extern EXTI_HandleTypeDef touchExtiLine;
 
 /* USER CODE END EV */
 
@@ -293,7 +293,7 @@ void DMA2_Stream3_IRQHandler(void)
   * @brief This function handles EXTI Lines 5-9 global interrupt.
   */
 void EXTI9_5_IRQHandler(void) {
-  HAL_EXTI_IRQHandler(&exti_line_9);
+  HAL_EXTI_IRQHandler(&touchExtiLine);
 }
 
 /* USER CODE END 1 */
