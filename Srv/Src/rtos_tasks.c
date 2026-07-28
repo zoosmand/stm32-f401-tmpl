@@ -23,6 +23,7 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "task.h"
+#include "w25qxx.h"
 #include "wizchip_port.h"
 
 #define DEFAULT_TASK_STACK_DEPTH    512U
@@ -67,6 +68,11 @@ void RtosTasks_DisplayUnlock(void) {
 
 static void rtosTasks_DefaultTask(void* argument) {
   (void)argument;
+
+  printf(
+    "W25Q64: %s\n",
+    (W25Qxx_Init() == SUCCESS) ? "ready" : "self-test failed"
+  );
 
   if (W5500_Init() != W5500_STATUS_OK)
     printf("W5500 initialization failed\n");
