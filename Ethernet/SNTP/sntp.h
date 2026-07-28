@@ -60,6 +60,7 @@ typedef struct _datetime {
 #define SECS_PERDAY		86400UL             	// seconds in a day = 60*60*24
 #define UTC_ADJ_HRS		9              	        // SEOUL : GMT+9
 #define EPOCH			1900                    // NTP start year
+#define SNTP_TIME_ZONE_UTC	21U
 
 void get_seconds_from_ntp_server(uint8_t *buf, uint16_t idx);
 void SNTP_init(uint8_t s, uint8_t *ntp_server, uint8_t tz, uint8_t *buf);

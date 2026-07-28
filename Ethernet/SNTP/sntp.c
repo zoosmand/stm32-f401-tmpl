@@ -6,6 +6,7 @@
 */
 
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "sntp.h"
@@ -214,6 +215,7 @@ void get_seconds_from_ntp_server(uint8_t *buf, uint16_t idx) {
 
 void SNTP_init(uint8_t s, uint8_t *ntp_server, uint8_t tz, uint8_t *buf) {
     NTP_SOCKET = s;
+    ntp_retry_cnt = 0;
 
     NTPformat.dstaddr[0] = ntp_server[0];
     NTPformat.dstaddr[1] = ntp_server[1];
@@ -245,7 +247,8 @@ void SNTP_init(uint8_t s, uint8_t *ntp_server, uint8_t tz, uint8_t *buf) {
 
 int8_t SNTP_run(datetime *time) {
     uint16_t RSR_len;
-    uint32_t destip = 0;
+    int32_t receivedLength;
+    uint8_t destip[4] = {0};
     uint16_t destport;
     uint16_t startindex = 40; //last 8-byte of data_buf[size is 48 byte] is xmt, so the startindex should be 40
 #if 1
@@ -262,13 +265,40 @@ int8_t SNTP_run(datetime *time) {
 #if 1
             // 20231019 taylor//teddy 240122
 #if ((_WIZCHIP_ == 6100) || (_WIZCHIP_ == 6300))
-            recvfrom(NTP_SOCKET, data_buf, RSR_len, (uint8_t *)&destip, &destport, &addr_len);
+            receivedLength = recvfrom(NTP_SOCKET, data_buf, RSR_len, destip, &destport, &addr_len);
 #else
-            recvfrom(NTP_SOCKET, data_buf, RSR_len, (uint8_t *)&destip, &destport);
+            receivedLength = recvfrom(NTP_SOCKET, data_buf, RSR_len, destip, &destport);
 #endif
 #else
-            recvfrom(NTP_SOCKET, data_buf, RSR_len, (uint8_t *)&destip, &destport);
+            receivedLength = recvfrom(NTP_SOCKET, data_buf, RSR_len, destip, &destport);
 #endif
+
+            uint8_t const mode = data_buf[0] & 0x07U;
+            uint8_t const leap = data_buf[0] >> 6U;
+            bool const validServer = (memcmp(
+              destip,
+              NTPformat.dstaddr,
+              sizeof(NTPformat.dstaddr)
+            ) == 0);
+            bool const validTimestamp = (data_buf[startindex] != 0U)
+              || (data_buf[startindex + 1U] != 0U)
+              || (data_buf[startindex + 2U] != 0U)
+              || (data_buf[startindex + 3U] != 0U);
+            bool const validResponse =
+              (receivedLength >= (int32_t)sizeof(ntpmessage))
+              && validServer
+              && (destport == ntp_port)
+              && (leap != 3U)
+              && ((mode == 4U) || (mode == 5U))
+              && (data_buf[1] > 0U)
+              && (data_buf[1] < 16U)
+              && validTimestamp;
+
+            if (!validResponse) {
+                close(NTP_SOCKET);
+                ntp_retry_cnt = 0;
+                return 0;
+            }
 
             get_seconds_from_ntp_server(data_buf, startindex);
             time->yy = Nowdatetime.yy;

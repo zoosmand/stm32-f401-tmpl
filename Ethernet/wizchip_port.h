@@ -21,6 +21,9 @@
 #ifndef WIZCHIP_PORT_H
 #define WIZCHIP_PORT_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 /**
   * @brief Result of initializing the W5500 network interface.
   */
@@ -36,5 +39,18 @@ typedef enum {
   * @retval (W5500_StatusTypeDef) W5500_STATUS_OK on success.
   */
 W5500_StatusTypeDef W5500_Init(void);
+
+/**
+  * @brief Check whether W5500 network initialization completed successfully.
+  * @retval (bool) true when the interface and network configuration are ready.
+  */
+bool W5500_IsReady(void);
+
+/**
+  * @brief Copy the configured DNS server address.
+  * @param dnsServer (uint8_t[4]) Destination for the IPv4 address.
+  * @retval (bool) true when network configuration is ready.
+  */
+bool W5500_GetDnsServer(uint8_t dnsServer[4]);
 
 #endif /* WIZCHIP_PORT_H */

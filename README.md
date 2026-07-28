@@ -21,6 +21,7 @@ drivers and FreeRTOS services needed before HTTPS monitoring is added.
 - W5500 Ethernet controller support
 - DHCP and DNS client code
 - W25Q64 SPI NOR flash driver with startup self-test
+- LSE-backed hardware RTC synchronized with `pool.ntp.org`
 
 ## Hardware
 
@@ -29,6 +30,20 @@ drivers and FreeRTOS services needed before HTTPS monitoring is added.
 - FT6336U touchscreen controller on I2C1
 - W5500 Ethernet controller on SPI3
 - Winbond W25Q64 flash memory on SPI2
+- 32.768 kHz LSE crystal for the STM32 RTC
+
+## Network time
+
+The hardware RTC stores UTC and retains its last valid value in the backup
+domain across ordinary resets. After the W5500 network is ready, a FreeRTOS
+service resolves `pool.ntp.org`, requests the current time over SNTP, and
+updates the RTC only after receiving a valid response.
+
+Failed DNS or SNTP requests leave the current RTC value unchanged and are
+retried after one minute. A successful clock is synchronized again every six
+hours to limit drift. Local time-zone conversion is intentionally left to the
+presentation layer. If the LSE crystal cannot start, the time service reports
+the failure and remains inactive without stopping the rest of the device.
 
 ## Project structure
 
