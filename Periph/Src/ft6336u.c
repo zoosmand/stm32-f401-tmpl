@@ -24,6 +24,8 @@ extern I2C_HandleTypeDef hi2c1;
 
 /** @brief Latch a touchscreen interrupt for deferred processing. */
 static void ft6336u_InterruptCallback(void);
+static uint16_t ft6336u_CoordinateDifference(uint16_t, uint16_t);
+static void ft6336u_ResetTouchSequence(TouchContext_TypeDef*);
 
 EXTI_HandleTypeDef touchExtiLine = {
   .Line             = TC_INT_PIN_POSITION,
@@ -41,6 +43,21 @@ __STATIC_INLINE void ft6336u_Reset(void) {
 
 static void ft6336u_InterruptCallback(void) {
   touchInterruptSequence++;
+}
+
+static uint16_t ft6336u_CoordinateDifference(
+  uint16_t first,
+  uint16_t second
+) {
+  return (first > second) ? (first - second) : (second - first);
+}
+
+static void ft6336u_ResetTouchSequence(
+  TouchContext_TypeDef* context
+) {
+  context->stableSampleCount = 0U;
+  context->releaseSampleCount = 0U;
+  context->holdSampleCount = 0U;
 }
 
 uint32_t FT6336U_GetInterruptSequence(void) {
@@ -161,114 +178,101 @@ static void ft6336u_MapToDisplay(TouchScreen_TypeDef* device) {
 }
 
 HAL_StatusTypeDef TouchScreen_Process(TouchScreen_TypeDef* device) {
+  if ((device == NULL) || (device->context == NULL) ||
+      (device->state == TOUCH_STATE_LOCKED) ||
+      (device->state == TOUCH_STATE_DISABLED))
+    return HAL_ERROR;
 
   if (ft6336u_Read(device) != HAL_OK) return HAL_ERROR;
 
-  if (device->context->touchCount) {
+  TouchContext_TypeDef* context = device->context;
+  if (context->touchCount > 0U)
     ft6336u_MapToDisplay(device);
-  }
 
-  __NOP();
+  device->event = TOUCH_EVENT_IDLE;
 
   switch (device->state) {
     case TOUCH_STATE_IDLE:
-      if (device->context->touchCount) {
+      if (context->touchCount > 0U) {
         device->state = TOUCH_STATE_DEBOUNCE;
-        device->event = TOUCH_EVENT_IDLE;
-        device->context->stableCount = 0;
-        device->context->debounceX = device->context->x;
-        device->context->debounceY = device->context->y;
+        context->referenceX = context->x;
+        context->referenceY = context->y;
+        context->stableSampleCount = 1U;
+        context->releaseSampleCount = 0U;
+        context->holdSampleCount = 0U;
       }
       break;
 
     case TOUCH_STATE_DEBOUNCE:
-      if (!device->context->touchCount) {
+      if (context->touchCount == 0U) {
         device->state = TOUCH_STATE_IDLE;
-        device->event = TOUCH_EVENT_IDLE;
-        device->context->stableCount = 0;
-        device->context->debounceX = 0;
-        device->context->debounceY = 0;
-        device->context->releaseCount = 0;
+        ft6336u_ResetTouchSequence(context);
         break;
       }
-      if (abs(device->context->x - device->context->debounceX) <= FT6336U_MOVE_THRESHOLD_PIXELS &&
-        abs(device->context->y - device->context->debounceY) <= FT6336U_MOVE_THRESHOLD_PIXELS) {
-        device->context->stableCount++;
 
-        if (device->context->stableCount >= FT6336U_STABLE_SAMPLE_COUNT) {
-          if (HAL_GetTick() > device->context->deadlineMs) {
-            device->state = TOUCH_STATE_ACTIVE;
-            device->context->x = device->context->debounceX;
-            device->context->y = device->context->debounceY;
-            device->context->deadlineMs = HAL_GetTick() + FT6336U_RELEASE_DELAY_MS;
-          }
-        }
+      if ((ft6336u_CoordinateDifference(
+             context->x,
+             context->referenceX
+           ) <= FT6336U_MOVE_THRESHOLD_PIXELS) &&
+          (ft6336u_CoordinateDifference(
+             context->y,
+             context->referenceY
+           ) <= FT6336U_MOVE_THRESHOLD_PIXELS)) {
+        context->stableSampleCount++;
       } else {
-        if (device->context->stableCount >= FT6336U_STABLE_SAMPLE_COUNT) {
-          device->state = TOUCH_STATE_IDLE;
-          device->event = TOUCH_EVENT_IDLE;
-          break;
-        }
-        device->context->stableCount++;
-        device->context->debounceX = device->context->x;
-        device->context->debounceY = device->context->y;
+        context->referenceX = context->x;
+        context->referenceY = context->y;
+        context->stableSampleCount = 1U;
+      }
+
+      if (context->stableSampleCount >=
+          FT6336U_DEBOUNCE_SAMPLE_COUNT) {
+        device->state = TOUCH_STATE_PRESSED;
+        device->event = TOUCH_EVENT_DOWN;
+        context->referenceX = context->x;
+        context->referenceY = context->y;
+        context->stableSampleCount = 0U;
       }
       break;
 
-    case TOUCH_STATE_ACTIVE:
-      if (device->context->stableCount >= FT6336U_STABLE_SAMPLE_COUNT) {
-        device->context->holdCount++;
-        if (device->context->holdCount > 1) {
-          if (device->context->holdCount > 5) {
-            device->state = TOUCH_STATE_HOLD;
-            device->event = TOUCH_EVENT_HOLD;
-            device->context->holdCount = 0;
-          }
-        } else {
-          device->state = TOUCH_STATE_DOWN;
-          device->event = TOUCH_EVENT_DOWN;
-          device->context->stableCount = 0;
-          device->context->holdCount = 0;
-        }
-      }
-      break;
-
-    case TOUCH_STATE_RELEASE:
-      device->context->releaseCount++;
-      if (device->context->releaseCount > FT6336U_RELEASE_SAMPLE_COUNT) {
-        device->state = TOUCH_STATE_IDLE;
-        device->event = TOUCH_EVENT_IDLE;
-        device->context->releaseCount = 0;
-      } else {
-        device->event = TOUCH_EVENT_IDLE;
-      }
-      break;
-
-    case TOUCH_STATE_DOWN:
-      device->context->releaseCount++;
-      if (device->context->releaseCount > FT6336U_RELEASE_SAMPLE_COUNT) {
-        device->state = TOUCH_STATE_RELEASE;
-        device->event = TOUCH_EVENT_UP;
-        device->context->releaseCount = 0;
-      } else {
-        device->event = TOUCH_EVENT_IDLE;
-      }
-      break;
-
-    /* TODO Fix On Hold event */
+    case TOUCH_STATE_PRESSED:
     case TOUCH_STATE_HOLD:
-      device->context->releaseCount++;
-      if (device->context->releaseCount > (FT6336U_RELEASE_SAMPLE_COUNT * 20)) {
-        device->state = TOUCH_STATE_RELEASE;
+      if (context->touchCount == 0U) {
+        context->releaseSampleCount++;
+        if (context->releaseSampleCount >=
+            FT6336U_RELEASE_SAMPLE_COUNT) {
+          device->state = TOUCH_STATE_IDLE;
+          device->event = TOUCH_EVENT_UP;
+          ft6336u_ResetTouchSequence(context);
+        }
+        break;
+      }
+
+      context->releaseSampleCount = 0U;
+
+      if ((ft6336u_CoordinateDifference(
+             context->x,
+             context->referenceX
+           ) > FT6336U_MOVE_THRESHOLD_PIXELS) ||
+          (ft6336u_CoordinateDifference(
+             context->y,
+             context->referenceY
+           ) > FT6336U_MOVE_THRESHOLD_PIXELS)) {
+        context->referenceX = context->x;
+        context->referenceY = context->y;
+        context->holdSampleCount = 0U;
+        device->state = TOUCH_STATE_PRESSED;
+        device->event = TOUCH_EVENT_MOVE;
+      } else if ((device->state == TOUCH_STATE_PRESSED) &&
+                 (++context->holdSampleCount >=
+                  FT6336U_HOLD_SAMPLE_COUNT)) {
+        device->state = TOUCH_STATE_HOLD;
         device->event = TOUCH_EVENT_HOLD;
-        device->context->releaseCount = 0;
-      } else {
-        device->event = TOUCH_EVENT_IDLE;
       }
       break;
 
     default:
-      break;
+      return HAL_ERROR;
   }
 
   return HAL_OK;

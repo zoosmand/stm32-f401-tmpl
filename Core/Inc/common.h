@@ -86,13 +86,12 @@ typedef struct {
   * @param y (uint16_t) Display-mapped Y coordinate in pixels.
   * @param lastX (uint16_t) X coordinate of the previous accepted touch.
   * @param lastY (uint16_t) Y coordinate of the previous accepted touch.
-  * @param debounceX (uint16_t) Candidate X coordinate during debounce.
-  * @param debounceY (uint16_t) Candidate Y coordinate during debounce.
-  * @param stableCount (uint8_t) Consecutive stable samples.
-  * @param releaseCount (uint8_t) Consecutive release samples.
+  * @param referenceX (uint16_t) Last stable X coordinate.
+  * @param referenceY (uint16_t) Last stable Y coordinate.
+  * @param stableSampleCount (uint8_t) Consecutive stable press samples.
+  * @param releaseSampleCount (uint8_t) Consecutive release samples.
   * @param touchCount (uint8_t) Number of currently reported contacts.
-  * @param deadlineMs (uint32_t) HAL tick deadline for the current state.
-  * @param holdCount (uint32_t) Samples accumulated while a touch is held.
+  * @param holdSampleCount (uint16_t) Stable samples accumulated while held.
   */
 typedef struct {
   uint8_t controllerEvent;
@@ -102,13 +101,12 @@ typedef struct {
   uint16_t y;
   uint16_t lastX;
   uint16_t lastY;
-  uint16_t debounceX;
-  uint16_t debounceY;
-  uint8_t stableCount;
-  uint8_t releaseCount;
+  uint16_t referenceX;
+  uint16_t referenceY;
+  uint8_t stableSampleCount;
+  uint8_t releaseSampleCount;
   uint8_t touchCount;
-  uint32_t deadlineMs;
-  uint32_t holdCount;
+  uint16_t holdSampleCount;
 } TouchContext_TypeDef;
 
 /**
@@ -116,12 +114,9 @@ typedef struct {
   */
 typedef enum {
   TOUCH_STATE_IDLE,
-  TOUCH_STATE_DOWN,
-  TOUCH_STATE_HOLD,
-  TOUCH_STATE_RELEASE,
-  TOUCH_STATE_UP,
   TOUCH_STATE_DEBOUNCE,
-  TOUCH_STATE_ACTIVE,
+  TOUCH_STATE_PRESSED,
+  TOUCH_STATE_HOLD,
   TOUCH_STATE_LOCKED,
   TOUCH_STATE_DISABLED,
 } TouchState_TypeDef;
