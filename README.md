@@ -27,6 +27,15 @@ failures.
 - Queued passive-buzzer tone generation and startup self-test
 - Periodic HTTP resource health monitoring
 - Persistent CRC-protected HTTP result log in W25Q64 NOR flash
+- Independent watchdog started after flash and network initialization
+
+## Watchdog
+
+The FreeRTOS watchdog service explicitly enables the LSI oscillator and starts
+the IWDG only after the potentially slow W25Q64 self-test and W5500/DHCP
+initialization have finished. It refreshes the watchdog once per second against
+a nominal four-second timeout. IWDG counting is frozen while the core is halted
+by a debugger.
 
 ## HTTP health check
 
