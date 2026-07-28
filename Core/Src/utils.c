@@ -19,17 +19,7 @@
   */
 
 #include "main.h"
-
-#define DISPLAY_PRINT_BUFFER_SIZE 78U
-#define DISPLAY_PRINT_X           10U
-#define DISPLAY_PRINT_Y           310U
-#define DISPLAY_PRINT_LINE_LIMIT  32U
-
-static char displayPrintBuffer[DISPLAY_PRINT_BUFFER_SIZE];
-static uint16_t displayPrintBufferCount = 0;
-static uint16_t displayPrintLineCount = 0;
-
-__STATIC_INLINE void utils_PrintDisplayLine(Display_TypeDef*);
+#include "display_console.h"
 
 /**
   * @brief Send one character through an enabled ITM stimulus channel.
@@ -59,18 +49,6 @@ __STATIC_INLINE void utils_PutCharacter(uint8_t character) {
     utils_SendItmCharacter(character, SWO_ITM);
   #endif
 
-  #ifdef DSPL_OUT
-  if (character == '\n') {
-    for (uint16_t index = displayPrintBufferCount; index < sizeof(displayPrintBuffer); index++) {
-      displayPrintBuffer[index] = ' ';
-    }
-    displayPrintBufferCount = 0;
-    utils_PrintDisplayLine(displayDevice);
-  } else if (displayPrintBufferCount < sizeof(displayPrintBuffer)) {
-    displayPrintBuffer[displayPrintBufferCount++] = character;
-  }
-  #endif
-
   #ifdef USART_OUT
     while (!(PREG_CHECK(USART_OUT->SR, USART_SR_TXE_Pos)));
     USART_OUT->DR = character;
@@ -86,9 +64,14 @@ __STATIC_INLINE void utils_PutCharacter(uint8_t character) {
   */
 int _write(int32_t fileDescriptor, char* data, int32_t length) {
   (void)fileDescriptor;
-  for (int32_t index = 0; index < length; index++) {
-    utils_PutCharacter(*data++);
-  }
+
+  #ifdef DSPL_OUT
+    (void)DisplayConsole_Write(data, (uint32_t)length);
+  #endif
+
+  for (int32_t index = 0; index < length; index++)
+    utils_PutCharacter((uint8_t)*data++);
+
   return length;
 }
 
@@ -115,39 +98,4 @@ void Delay_Milliseconds(uint32_t delayMs) {
   while ((HAL_GetTick() - startTick) < delayMs) {
     __NOP();
   }
-}
-
-/**
-  * @brief Render the completed printf line on the display.
-  * @param display (Display_TypeDef*) Initialized display object.
-  */
-__STATIC_INLINE void utils_PrintDisplayLine(Display_TypeDef* display) {
-
-  Font_TypeDef font = {
-    .backgroundColor = DISPLAY_COLOR_BLACK,
-    .color = DISPLAY_COLOR_LIME,
-    .fontData = (const uint8_t*)&fontDot5x7,
-    .height = 8,
-    .width = 6,
-    .bytesPerGlyph = 6,
-  };
-
-  Display_PrintString(display, DISPLAY_PRINT_X,
-    (DISPLAY_PRINT_Y - (displayPrintLineCount * font.height)), &font,
-    displayPrintBuffer);
-
-  if (displayPrintLineCount++ > DISPLAY_PRINT_LINE_LIMIT) {
-    displayPrintLineCount = 0;
-  } else {
-    Display_FillRectangle(
-      display,
-      DISPLAY_PRINT_X,
-      (DISPLAY_PRINT_Y - (displayPrintLineCount * font.height)),
-      (sizeof(displayPrintBuffer) * font.width),
-      font.height,
-      font.backgroundColor,
-      DISPLAY_LAYER_FRONT
-    );
-  }
-
 }

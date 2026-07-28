@@ -33,11 +33,11 @@ extern "C" {
 #define FT6336U_REGISTER_TOUCH1_X_LOW       0x04U
 #define FT6336U_REGISTER_TOUCH1_Y_HIGH      0x05U
 #define FT6336U_REGISTER_TOUCH1_Y_LOW       0x06U
-#define FT6336U_STABLE_SAMPLE_COUNT         3U
-#define FT6336U_MOVE_THRESHOLD_PIXELS       3U
+#define FT6336U_DEBOUNCE_SAMPLE_COUNT       3U
 #define FT6336U_RELEASE_SAMPLE_COUNT        5U
-#define FT6336U_DEADZONE_PIXELS             3U
-#define FT6336U_RELEASE_DELAY_MS            500U
+#define FT6336U_MOVE_THRESHOLD_PIXELS       3U
+#define FT6336U_HOLD_SAMPLE_COUNT          50U
+#define FT6336U_INTERRUPT_PRIORITY          4U
 
 /**
   * @brief Initialize the FT6336U controller and its GPIO interrupt.
@@ -54,14 +54,15 @@ TouchScreen_TypeDef* FT6336U_Init(void);
 HAL_StatusTypeDef TouchScreen_Process(TouchScreen_TypeDef* device);
 
 /**
+  * @brief Read the monotonically increasing touchscreen interrupt sequence.
+  * @retval (uint32_t) Number of latched FT6336U interrupt events.
+  */
+uint32_t FT6336U_GetInterruptSequence(void);
+
+/**
   * @brief EXTI handle used by the FT6336U interrupt line.
   */
 extern EXTI_HandleTypeDef touchExtiLine;
-
-/**
-  * @brief Interrupt-latched touchscreen activity state.
-  */
-extern TouchState_TypeDef touchInterruptState;
 
 #ifdef __cplusplus
 }

@@ -51,13 +51,10 @@ static void display_OnUp(Display_TypeDef* display, TouchScreen_TypeDef* touchScr
   touchScreen->context->lastY = touchScreen->context->y;
 }
 
-void Display_Run(Display_TypeDef* display, TouchScreen_TypeDef* touchScreen) {
-
-  if (display->lock == ENABLE) return;
-  if (touchInterruptState != TOUCH_STATE_ACTIVE) return;
-
-  TouchScreen_Process(touchScreen);
-
+void Display_HandleTouchEvent(
+  Display_TypeDef* display,
+  TouchScreen_TypeDef* touchScreen
+) {
   switch (touchScreen->event) {
     case TOUCH_EVENT_UP:
       display_OnUp(display, touchScreen);
@@ -69,4 +66,3 @@ void Display_Run(Display_TypeDef* display, TouchScreen_TypeDef* touchScreen) {
       break;
   }
 }
-

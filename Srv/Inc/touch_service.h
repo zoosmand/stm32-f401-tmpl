@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file           : display.h
-  * @brief          : Touch-driven display demonstration service.
+  * @file           : touch_service.h
+  * @brief          : FreeRTOS touchscreen event-processing service.
   * @project        : STM32F401 Test Platform
   * @platform       : STMicroelectronics STM32F401RCT6
-  * @created        : 05.01.2026 03:37:54 PM
+  * @created        : 28.07.2026
   ******************************************************************************
   * @attention
   *
@@ -18,21 +18,30 @@
   ******************************************************************************
   */
 
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#ifndef TOUCH_SERVICE_H
+#define TOUCH_SERVICE_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "main.h"
+#include "display.h"
 
 /**
-  * @brief Handle a processed touch event on the demonstration display.
-  * @param display (Display_TypeDef*) Initialized display object.
-  * @param touchScreen (TouchScreen_TypeDef*) Processed touchscreen object.
+  * @brief Touchscreen service initialization result.
   */
-void Display_HandleTouchEvent(
+typedef enum {
+  TOUCH_SERVICE_STATUS_OK = 0,
+  TOUCH_SERVICE_STATUS_ERROR
+} TouchService_StatusTypeDef;
+
+/**
+  * @brief Create the touchscreen event-processing task.
+  * @param display (Display_TypeDef*) Initialized display object.
+  * @param touchScreen (TouchScreen_TypeDef*) Initialized touchscreen object.
+  * @retval (TouchService_StatusTypeDef) Task creation result.
+  */
+TouchService_StatusTypeDef TouchService_Init(
   Display_TypeDef* display,
   TouchScreen_TypeDef* touchScreen
 );
@@ -41,4 +50,4 @@ void Display_HandleTouchEvent(
 }
 #endif
 
-#endif /* DISPLAY_H */
+#endif /* TOUCH_SERVICE_H */

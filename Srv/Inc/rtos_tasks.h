@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file           : display.h
-  * @brief          : Touch-driven display demonstration service.
+  * @file           : rtos_tasks.h
+  * @brief          : Application FreeRTOS task creation and shared locks.
   * @project        : STM32F401 Test Platform
   * @platform       : STMicroelectronics STM32F401RCT6
-  * @created        : 05.01.2026 03:37:54 PM
+  * @created        : 28.07.2026
   ******************************************************************************
   * @attention
   *
@@ -18,8 +18,8 @@
   ******************************************************************************
   */
 
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#ifndef RTOS_TASKS_H
+#define RTOS_TASKS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,17 +28,31 @@ extern "C" {
 #include "main.h"
 
 /**
-  * @brief Handle a processed touch event on the demonstration display.
-  * @param display (Display_TypeDef*) Initialized display object.
-  * @param touchScreen (TouchScreen_TypeDef*) Processed touchscreen object.
+  * @brief RTOS application initialization result.
   */
-void Display_HandleTouchEvent(
-  Display_TypeDef* display,
-  TouchScreen_TypeDef* touchScreen
-);
+typedef enum {
+  RTOS_TASKS_STATUS_OK = 0,
+  RTOS_TASKS_STATUS_ERROR
+} RtosTasks_StatusTypeDef;
+
+/**
+  * @brief Create the default application task.
+  * @retval (RtosTasks_StatusTypeDef) Task creation result.
+  */
+RtosTasks_StatusTypeDef RtosTasks_Init(void);
+
+/**
+  * @brief Lock the display for a task-level drawing operation.
+  */
+void RtosTasks_DisplayLock(void);
+
+/**
+  * @brief Release the display after a task-level drawing operation.
+  */
+void RtosTasks_DisplayUnlock(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* DISPLAY_H */
+#endif /* RTOS_TASKS_H */

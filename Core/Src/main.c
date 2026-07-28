@@ -18,6 +18,11 @@
   ******************************************************************************
   */
 #include "main.h"
+#include "display_console.h"
+#include "FreeRTOS.h"
+#include "rtos_tasks.h"
+#include "task.h"
+#include "touch_service.h"
 
 I2C_HandleTypeDef hi2c1;
 DMA_HandleTypeDef hdma_i2c1_rx;
@@ -34,8 +39,6 @@ DMA_HandleTypeDef hdma_spi2_tx;
 UART_HandleTypeDef huart1;
 
 Display_TypeDef* displayDevice;
-
-static uint8_t loopbackBuffer[1024];
 
 static void system_ClockConfigure(void);
 static void MX_GPIO_Init(void);
@@ -65,26 +68,20 @@ int main(void) {
   displayDevice = ST7796_Init();
   TouchScreen_TypeDef* touchScreen = FT6336U_Init();
 
-  printf("Hello printf();\n");
-
-  if (W5500_Init())
+  if (DisplayConsole_Init(displayDevice) != DISPLAY_CONSOLE_STATUS_OK)
     Error_Handler();
 
-  uint32_t tcpClientTick = HAL_GetTick();
+  printf("Hello printf();\n");
 
-  while (1) {
-    Display_Run(displayDevice, touchScreen);
-    loopback_tcps(0, loopbackBuffer, 5300);
+  if (RtosTasks_Init() != RTOS_TASKS_STATUS_OK)
+    Error_Handler();
 
-    uint8_t ipAddress[4] = {172, 18, 10, 18};
+  if (TouchService_Init(displayDevice, touchScreen) !=
+      TOUCH_SERVICE_STATUS_OK)
+    Error_Handler();
 
-    if ((HAL_GetTick() - tcpClientTick) >= 2560U) {
-      tcpClientTick = HAL_GetTick();
-      loopback_tcpc(1, loopbackBuffer, ipAddress, 54000);
-    }
-    HAL_Delay(10);
-
-  }
+  vTaskStartScheduler();
+  Error_Handler();
 }
 
 /**
