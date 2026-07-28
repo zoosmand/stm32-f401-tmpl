@@ -1,13 +1,14 @@
 /**
   ******************************************************************************
   * @file           : ft6336u.h
-  * @brief          : Header for ft6336u.c file.
-  *                   This file contains the common defines of the Touchscreen
-  *                   controller FT6336U driver code.
+  * @brief          : FT6336U capacitive touchscreen interface.
+  * @project        : STM32F401 Test Platform
+  * @platform       : STMicroelectronics STM32F401RCT6
+  * @created        : 24.01.2026 12:51:32 PM
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2017-2026 Askug Ltd.
+  * Copyright (c) 2017-2026 Dmitry Slobodchikov
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -17,11 +18,8 @@
   ******************************************************************************
   */
 
-
-
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __FT6336U_H
-#define __FT6336U_H
+#ifndef FT6336U_H
+#define FT6336U_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,50 +27,45 @@ extern "C" {
 
 #include "main.h"
 
-// | Signal      | Notes                             |
-// | ----------- | --------------------------------- |
-// | I²C address | `0x38` (7-bit)                    |
-// | INT         | Optional (can poll instead)       |
-// | RST         | Optional (often tied to MCU GPIO) |
-// | VDD         | 3.3 V                             |
-// | Pullups     | Required on SDA/SCL               |
+#define FT6336U_I2C_ADDRESS                 0x38U
+#define FT6336U_REGISTER_TOUCH_COUNT        0x02U
+#define FT6336U_REGISTER_TOUCH1_X_HIGH      0x03U
+#define FT6336U_REGISTER_TOUCH1_X_LOW       0x04U
+#define FT6336U_REGISTER_TOUCH1_Y_HIGH      0x05U
+#define FT6336U_REGISTER_TOUCH1_Y_LOW       0x06U
+#define FT6336U_DEBOUNCE_SAMPLE_COUNT       3U
+#define FT6336U_RELEASE_SAMPLE_COUNT        5U
+#define FT6336U_MOVE_THRESHOLD_PIXELS       3U
+#define FT6336U_HOLD_SAMPLE_COUNT          50U
+#define FT6336U_INTERRUPT_PRIORITY          4U
 
-#define FT6336_ADDR 0x38
-
-#define TC_RST_GPIO_Port  GPIOB
-#define TC_RST_Pin        GPIO_PIN_5
-
-#define TC_INT_GPIO_Port  GPIOB
-#define TC_INT_Pin        GPIO_PIN_9
-#define TC_INT_Pin_Pos    9
-
-
-// Register	Addr	Size	Meaning
-#define TD_STATUS	0x02	// 1	Number of touch points (0–2)
-#define TOUCH1_XH	0x03	// 1	Touch 1 X high
-#define TOUCH1_XL	0x04	// 1	Touch 1 X low
-#define TOUCH1_YH	0x05	// 1	Touch 1 Y high
-#define TOUCH1_YL	0x06	// 1	Touch 1 Y low
-
-#define TOUCH_STABLE_COUNT          3   // consecutive reads
-#define TOUCH_MOVE_THRESHOLD        3   // pixels
-#define TOUCH_RELEASE_COUNT         5   // consecutive reads
-#define TOUCH_DEADZONE              3   // pixels
-#define TOUCH_RELEASE_THRESHOLD     500 // ms
-
-
-
+/**
+  * @brief Initialize the FT6336U controller and its GPIO interrupt.
+  * @retval (TouchScreen_TypeDef*) Persistent device object. Its state is
+  *         TOUCH_STATE_IDLE when initialization succeeds.
+  */
 TouchScreen_TypeDef* FT6336U_Init(void);
 
-HAL_StatusTypeDef __attribute__((weak)) TouchScreen_Process(TouchScreen_TypeDef* dev);
+/**
+  * @brief Read and process one touchscreen sample.
+  * @param device (TouchScreen_TypeDef*) Initialized touchscreen object.
+  * @retval (HAL_StatusTypeDef) HAL_OK on a valid sample; HAL_ERROR on I2C failure.
+  */
+HAL_StatusTypeDef TouchScreen_Process(TouchScreen_TypeDef* device);
 
+/**
+  * @brief Read the monotonically increasing touchscreen interrupt sequence.
+  * @retval (uint32_t) Number of latched FT6336U interrupt events.
+  */
+uint32_t FT6336U_GetInterruptSequence(void);
 
-
-
-
+/**
+  * @brief EXTI handle used by the FT6336U interrupt line.
+  */
+extern EXTI_HandleTypeDef touchExtiLine;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __FT6336U_H */
+#endif /* FT6336U_H */

@@ -1,13 +1,14 @@
 /**
   ******************************************************************************
-  * @file           : st7796.h
-  * @brief          : Header for st7796.c file.
-  *                   This file contains the common defines of the ST7796 TFT
-  *                   driver code.
+  * @file           : fonts.h
+  * @brief          : Bitmap font table declarations.
+  * @project        : STM32F401 Test Platform
+  * @platform       : STMicroelectronics STM32F401RCT6
+  * @created        : 07.01.2026 08:43:57 PM
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2017-2026 Askug Ltd.
+  * Copyright (c) 2017-2026 Dmitry Slobodchikov
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -17,23 +18,19 @@
   ******************************************************************************
   */
 
-
-#ifndef __FONTS_H_
-#define __FONTS_H_
-
+#ifndef FONTS_H
+#define FONTS_H
 
 #include "main.h"
 
-typedef uint8_t font_dot_5x7_t[6];
-typedef uint8_t font_dot_10x14_t[24];
-typedef uint8_t font_dot_15x21_t[54];
-typedef uint8_t font_dot_20x28_t[96];
+typedef uint8_t FontDot5x7_TypeDef[6];
+typedef uint8_t FontDot10x14_TypeDef[24];
+typedef uint8_t FontDot15x21_TypeDef[54];
+typedef uint8_t FontDot20x28_TypeDef[96];
 
-extern const font_dot_5x7_t font_dot_5x7[96];
-extern const font_dot_10x14_t font_dot_10x14[96];
-extern const font_dot_15x21_t font_dot_15x21[96];
-extern const font_dot_20x28_t font_dot_20x28[96];
+extern const FontDot5x7_TypeDef fontDot5x7[96];
+extern const FontDot10x14_TypeDef fontDot10x14[96];
+extern const FontDot15x21_TypeDef fontDot15x21[96];
+extern const FontDot20x28_TypeDef fontDot20x28[96];
 
-
-
-#endif /* __FONTS_H_ */
+#endif /* FONTS_H */

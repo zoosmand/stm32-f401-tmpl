@@ -1,13 +1,14 @@
 /**
   ******************************************************************************
   * @file           : st7796.h
-  * @brief          : Header for st7796.c file.
-  *                   This file contains the common defines of the ST7796 TFT
-  *                   driver code.
+  * @brief          : ST7796 TFT display interface.
+  * @project        : STM32F401 Test Platform
+  * @platform       : STMicroelectronics STM32F401RCT6
+  * @created        : 03.01.2026 08:05:59 PM
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2017-2026 Askug Ltd.
+  * Copyright (c) 2017-2026 Dmitry Slobodchikov
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -17,11 +18,8 @@
   ******************************************************************************
   */
 
-
-
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __ST7796_H
-#define __ST7796_H
+#ifndef ST7796_H
+#define ST7796_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,76 +27,206 @@ extern "C" {
 
 #include "main.h"
 
-// 0x20 or 0xe0 - vertical
-// 0x40 or 0x80 - horizontal
-// 0x00 - RGB
-// 0x08 - BRG
-#define ORIENTATION       (0x80 | 0x00)
+#define ST7796_ORIENTATION       (0x80 | 0x00)
 
-#if ((ORIENTATION >> 6) < 3 && (ORIENTATION >> 6) != 0)
-  #define DISPLAY_POSITION 0 // horizontal
-  #define DISPLAY_WIDTH   480
-  #define DISPLAY_HEIGHT  320
+#if ((ST7796_ORIENTATION >> 6) < 3 && (ST7796_ORIENTATION >> 6) != 0)
+  #define ST7796_IS_PORTRAIT 0
+  #define ST7796_DISPLAY_WIDTH   480
+  #define ST7796_DISPLAY_HEIGHT  320
 #else
-  #define DISPLAY_POSITION 1 // vertical
-  #define DISPLAY_WIDTH   320
-  #define DISPLAY_HEIGHT  480
+  #define ST7796_IS_PORTRAIT 1
+  #define ST7796_DISPLAY_WIDTH   320
+  #define ST7796_DISPLAY_HEIGHT  480
 #endif
 
+#define DISPLAY_COLOR_WHITE       (uint16_t)0xffff
+#define DISPLAY_COLOR_BLACK       (uint16_t)0x0000
+#define DISPLAY_COLOR_RED         (uint16_t)0xf800
+#define DISPLAY_COLOR_GREEN       (uint16_t)0x001f
+#define DISPLAY_COLOR_BLUE        (uint16_t)0x07e0
+#define DISPLAY_COLOR_PURPLE      (uint16_t)(DISPLAY_COLOR_RED | DISPLAY_COLOR_BLUE)
+#define DISPLAY_COLOR_SKY         (uint16_t)(DISPLAY_COLOR_GREEN | DISPLAY_COLOR_BLUE)
+#define DISPLAY_COLOR_LIME        (uint16_t)(DISPLAY_COLOR_GREEN | DISPLAY_COLOR_RED)
 
-
-/* Define colors*/
-#define COLOR_WHITE       (uint16_t)0xffff
-#define COLOR_BLACK       (uint16_t)0x0000
-#define COLOR_RED         (uint16_t)0xf800
-#define COLOR_GREEN       (uint16_t)0x001f
-#define COLOR_BLUE        (uint16_t)0x07e0
-#define COLOR_PURPLE      (uint16_t)(COLOR_RED | COLOR_BLUE)
-#define COLOR_SKY         (uint16_t)(COLOR_GREEN | COLOR_BLUE)
-#define COLOR_LIME        (uint16_t)(COLOR_GREEN | COLOR_RED)
-
-
-#define PIX_BUF_SZ        4096U  // words (4096 pixels)
-
-#define TFT_CS_GPIO_Port  GPIOA
-#define TFT_CS_Pin        GPIO_PIN_4
-
-#define TFT_DC_GPIO_Port  GPIOA
-#define TFT_DC_Pin        GPIO_PIN_2
-
-#define TFT_RST_GPIO_Port GPIOA
-#define TFT_RST_Pin       GPIO_PIN_3
-
-/* TODO realise PWM for LED pin */
-// #define TFT_BL_GPIO_Port GPIOB
-// #define TFT_BL_Pin       GPIO_PIN_10   // optional (or tie to VCC)
-
+#define ST7796_PIXEL_BUFFER_SIZE        4096U
+#define ST7796_DMA_TIMEOUT_MS            100U
 
 extern uint8_t __dma_buffer_write_start__;
 extern uint8_t __dma_buffer_write_end__;
+extern uint8_t __dma_buffer_read_start__;
+extern uint8_t __dma_buffer_read_end__;
 
-
+/**
+  * @brief Initialize the ST7796 controller and clear the display.
+  * @retval (Display_TypeDef*) Persistent display object. Its lock member is
+  *         DISABLE when initialization succeeds.
+  */
 Display_TypeDef* ST7796_Init(void);
 
+/**
+  * @brief Fill the complete display with one RGB565 color.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param color (uint16_t) RGB565 fill color.
+  * @param layer (DisplayLayer_TypeDef) Destination pixel buffer.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_Fill(
+  Display_TypeDef* device, uint16_t color, DisplayLayer_TypeDef layer);
 
+/**
+  * @brief Draw a rectangular RGB565 border.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param x (uint16_t) Left coordinate in pixels.
+  * @param y (uint16_t) Top coordinate in pixels.
+  * @param width (uint16_t) Rectangle width in pixels.
+  * @param height (uint16_t) Rectangle height in pixels.
+  * @param thickness (uint16_t) Border thickness in pixels.
+  * @param color (uint16_t) RGB565 border color.
+  * @param layer (DisplayLayer_TypeDef) Destination pixel buffer.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_DrawRectangle(
+  Display_TypeDef* device, uint16_t x, uint16_t y, uint16_t width,
+  uint16_t height, uint16_t thickness, uint16_t color, DisplayLayer_TypeDef layer);
 
-HAL_StatusTypeDef __attribute__((weak)) Display_Fill(Display_TypeDef*, uint16_t, ImageLayer_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_FillRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawPixel(Display_TypeDef*, uint16_t, uint16_t, uint16_t, ImageLayer_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawVLine(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawHLine(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_DrawCircle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_FillCircle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t, ImageLayer_t);
+/**
+  * @brief Fill a rectangular display region.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param x (uint16_t) Left coordinate in pixels.
+  * @param y (uint16_t) Top coordinate in pixels.
+  * @param width (uint16_t) Region width in pixels.
+  * @param height (uint16_t) Region height in pixels.
+  * @param color (uint16_t) RGB565 fill color.
+  * @param layer (DisplayLayer_TypeDef) Destination pixel buffer.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_FillRectangle(
+  Display_TypeDef* device, uint16_t x, uint16_t y, uint16_t width,
+  uint16_t height, uint16_t color, DisplayLayer_TypeDef layer);
 
-HAL_StatusTypeDef __attribute__((weak)) Display_FillBackground(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t);
-HAL_StatusTypeDef __attribute__((weak)) Display_ReadRectangle(Display_TypeDef*, uint16_t, uint16_t, uint16_t, uint16_t);
+/**
+  * @brief Draw one pixel.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param x (uint16_t) Horizontal coordinate in pixels.
+  * @param y (uint16_t) Vertical coordinate in pixels.
+  * @param color (uint16_t) RGB565 pixel color.
+  * @param layer (DisplayLayer_TypeDef) Destination pixel buffer.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_DrawPixel(
+  Display_TypeDef* device, uint16_t x, uint16_t y, uint16_t color,
+  DisplayLayer_TypeDef layer);
 
-HAL_StatusTypeDef __attribute__((weak)) Display_PrintSymbol(Display_TypeDef*, uint16_t, uint16_t, Font_TypeDef*, char);
-HAL_StatusTypeDef __attribute__((weak)) Display_PrintString(Display_TypeDef*, uint16_t, uint16_t, Font_TypeDef*, const char*);
+/**
+  * @brief Draw a vertical line.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param x (uint16_t) Horizontal coordinate in pixels.
+  * @param y (uint16_t) Starting vertical coordinate in pixels.
+  * @param length (uint16_t) Line length in pixels.
+  * @param thickness (uint16_t) Line thickness in pixels.
+  * @param color (uint16_t) RGB565 line color.
+  * @param layer (DisplayLayer_TypeDef) Destination pixel buffer.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_DrawVLine(
+  Display_TypeDef* device, uint16_t x, uint16_t y, uint16_t length,
+  uint16_t thickness, uint16_t color, DisplayLayer_TypeDef layer);
+
+/**
+  * @brief Draw a horizontal line.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param x (uint16_t) Starting horizontal coordinate in pixels.
+  * @param y (uint16_t) Vertical coordinate in pixels.
+  * @param length (uint16_t) Line length in pixels.
+  * @param thickness (uint16_t) Line thickness in pixels.
+  * @param color (uint16_t) RGB565 line color.
+  * @param layer (DisplayLayer_TypeDef) Destination pixel buffer.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_DrawHLine(
+  Display_TypeDef* device, uint16_t x, uint16_t y, uint16_t length,
+  uint16_t thickness, uint16_t color, DisplayLayer_TypeDef layer);
+
+/**
+  * @brief Draw a circle border.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param centerX (uint16_t) Circle-center X coordinate in pixels.
+  * @param centerY (uint16_t) Circle-center Y coordinate in pixels.
+  * @param radius (uint16_t) Circle radius in pixels.
+  * @param thickness (uint16_t) Border thickness in pixels.
+  * @param color (uint16_t) RGB565 border color.
+  * @param layer (DisplayLayer_TypeDef) Destination pixel buffer.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_DrawCircle(
+  Display_TypeDef* device, uint16_t centerX, uint16_t centerY, uint16_t radius,
+  uint16_t thickness, uint16_t color, DisplayLayer_TypeDef layer);
+
+/**
+  * @brief Draw a filled circle.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param centerX (uint16_t) Circle-center X coordinate in pixels.
+  * @param centerY (uint16_t) Circle-center Y coordinate in pixels.
+  * @param radius (uint16_t) Circle radius in pixels.
+  * @param color (uint16_t) RGB565 fill color.
+  * @param layer (DisplayLayer_TypeDef) Destination pixel buffer.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_FillCircle(
+  Display_TypeDef* device, uint16_t centerX, uint16_t centerY, uint16_t radius,
+  uint16_t color, DisplayLayer_TypeDef layer);
+
+/**
+  * @brief Restore a rectangle from the background buffer.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param x (uint16_t) Left coordinate in pixels.
+  * @param y (uint16_t) Top coordinate in pixels.
+  * @param width (uint16_t) Region width in pixels.
+  * @param height (uint16_t) Region height in pixels.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_FillBackground(
+  Display_TypeDef* device, uint16_t x, uint16_t y, uint16_t width, uint16_t height);
+
+/**
+  * @brief Read a rectangle into the background buffer.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param x (uint16_t) Left coordinate in pixels.
+  * @param y (uint16_t) Top coordinate in pixels.
+  * @param width (uint16_t) Region width in pixels.
+  * @param height (uint16_t) Region height in pixels.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_ReadRectangle(
+  Display_TypeDef* device, uint16_t x, uint16_t y, uint16_t width, uint16_t height);
+
+/**
+  * @brief Render one font symbol.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param x (uint16_t) Left coordinate in pixels.
+  * @param y (uint16_t) Top coordinate in pixels.
+  * @param font (Font_TypeDef*) Bitmap font description.
+  * @param symbol (char) Printable ASCII character.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_PrintSymbol(
+  Display_TypeDef* device, uint16_t x, uint16_t y, Font_TypeDef* font, char symbol);
+
+/**
+  * @brief Render a null-terminated string, stopping at newline.
+  * @param device (Display_TypeDef*) Initialized display object.
+  * @param x (uint16_t) Left coordinate in pixels.
+  * @param y (uint16_t) Top coordinate in pixels.
+  * @param font (Font_TypeDef*) Bitmap font description.
+  * @param string (const char*) Null-terminated text; ownership remains with caller.
+  * @retval (HAL_StatusTypeDef) HAL_OK on success.
+  */
+HAL_StatusTypeDef Display_PrintString(
+  Display_TypeDef* device, uint16_t x, uint16_t y, Font_TypeDef* font,
+  const char* string);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __ST7796_H */
+#endif /* ST7796_H */

@@ -1,13 +1,14 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.h
-  * @brief          : Header for main.c file.
-  *                   This file contains the common defines of the application.
+  * @brief          : Application-wide declarations and board pin assignments.
+  * @project        : STM32F401 Test Platform
+  * @platform       : STMicroelectronics STM32F401RCT6
+  * @created        : 03.01.2026 06:40:21 PM
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2026 STMicroelectronics.
+  * Copyright (c) 2017-2026 Dmitry Slobodchikov
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -16,68 +17,76 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
 
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H
-#define __MAIN_H
+#ifndef MAIN_H
+#define MAIN_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <time.h>
 #include <stdbool.h>
 
-
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 #include "fonts.h"
 #include "common.h"
 #include "st7796.h"
 #include "ft6336u.h"
 #include "display.h"
-/* USER CODE END Includes */
 
-/* Exported types ------------------------------------------------------------*/
-/* USER CODE BEGIN ET */
-// extern DMA_HandleTypeDef hdma_spi1_rx;
-// extern DMA_HandleTypeDef hdma_spi1_tx;
+#include "wizchip_port.h"
 
-// extern TouchScreen_TypeDef touch_0;
-/* USER CODE END ET */
+extern Display_TypeDef* displayDevice;
 
-/* Exported constants --------------------------------------------------------*/
-/* USER CODE BEGIN EC */
-
-/* USER CODE END EC */
-
-/* Exported macro ------------------------------------------------------------*/
-/* USER CODE BEGIN EM */
-
-/* USER CODE END EM */
-
-/* Exported functions prototypes ---------------------------------------------*/
+/**
+  * @brief Enter the unrecoverable system-error loop.
+  */
 void Error_Handler(void);
 
-/* USER CODE BEGIN EFP */
+/**
+  * @brief Busy-wait for a number of microseconds using the DWT cycle counter.
+  * @param delayUs (uint32_t) Delay duration in microseconds.
+  */
+void Delay_Microseconds(uint32_t delayUs);
 
-/* USER CODE END EFP */
+/**
+  * @brief Busy-wait for a number of milliseconds using the HAL tick.
+  * @param delayMs (uint32_t) Delay duration in milliseconds.
+  */
+void Delay_Milliseconds(uint32_t delayMs);
 
-/* Private defines -----------------------------------------------------------*/
+#define HB_LED_Pin GPIO_PIN_13
+#define HB_LED_GPIO_Port GPIOC
+#define TFT_DC_Pin GPIO_PIN_2
+#define TFT_DC_GPIO_Port GPIOA
+#define TFT_RST_Pin GPIO_PIN_3
+#define TFT_RST_GPIO_Port GPIOA
+#define TFT_CS_Pin GPIO_PIN_4
+#define TFT_CS_GPIO_Port GPIOA
+#define BUZZER_Pin GPIO_PIN_8
+#define BUZZER_GPIO_Port GPIOA
+#define ETH_IN_Pin GPIO_PIN_0
+#define ETH_IN_GPIO_Port GPIOB
+#define ETH_RESET_Pin GPIO_PIN_1
+#define ETH_RESET_GPIO_Port GPIOB
+#define TC_RST_Pin GPIO_PIN_2
+#define TC_RST_GPIO_Port GPIOB
+#define ETH_CS_Pin GPIO_PIN_15
+#define ETH_CS_GPIO_Port GPIOA
+#define SD_CS_Pin GPIO_PIN_8
+#define SD_CS_GPIO_Port GPIOB
+#define TC_INT_Pin GPIO_PIN_9
+#define TC_INT_GPIO_Port GPIOB
 
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
+#define TC_INT_PIN_POSITION 9U
+#define DSPL_OUT
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __MAIN_H */
+#endif /* MAIN_H */

@@ -59,8 +59,14 @@ dkms.conf
 
 # Builds
 build/
+build*/
 Core/.DS_Store
 .DS_Store
 
 # CMSIS and HAL drivers
 Drivers/
+
+# FreeRTOS Source files
+FreeRTOS*/
+
+

@@ -1,17 +1,27 @@
-/*
- * Filename: dot_5x7.c
- * Description: The file contains simple 5x7 dot font code.
- *
- * Project: Simple Multitasking Logic
- * Platform: MicroChip ATTiny85
- * Created: 10.08.2025 07:35:51 PM
- * Author: Dmitry Slobodchikov
- */
+/**
+  ******************************************************************************
+  * @file           : dot_5x7.c
+  * @brief          : Simple 5x7 bitmap font data.
+  * @project        : Simple Multitasking Logic
+  * @platform       : MicroChip ATTiny85
+  * @created        : 10.08.2025 07:35:51 PM
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2017-2026 Dmitry Slobodchikov
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
 
 #include "fonts.h"
 
 
-const font_dot_5x7_t font_dot_5x7[96] = {
+const FontDot5x7_TypeDef fontDot5x7[96] = {
   {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // [space]  #32 (0x20)
   {0x00, 0x00, 0x00, 0xfa, 0x00, 0x00}, // !        #33 (0x21)
   {0x00, 0x00, 0xe0, 0x00, 0xe0, 0x00}, // "        #34 (0x22)
