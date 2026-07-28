@@ -38,7 +38,9 @@
 #define W25QXX_UNIQUE_ID_DUMMY_LENGTH        4U
 #define W25QXX_DMA_TRANSFER_LIMIT           0xffffU
 #define W25QXX_DMA_TIMEOUT_MS                  100U
-#define W25QXX_BUSY_POLL_LIMIT            1000000U
+#define W25QXX_POLLING_TRANSFER_LIMIT           8U
+#define W25QXX_POLLING_TIMEOUT_MS              10U
+#define W25QXX_BUSY_TIMEOUT_MS                3000U
 #define W25QXX_SELF_TEST_SEED                 0xa5U
 #define W25QXX_SELF_TEST_STEP                 0x25U
 
@@ -72,7 +74,7 @@ static ErrorStatus w25qxx_BeginTransaction(void);
 static ErrorStatus w25qxx_EndTransaction(ErrorStatus status);
 static uint32_t w25qxx_DecodeAddress(uint32_t address);
 static ErrorStatus w25qxx_ValidateRange(uint32_t address, uint32_t length);
-static ErrorStatus w25qxx_TransferDMA(
+static ErrorStatus w25qxx_Transfer(
   const uint8_t* transmitBuffer,
   uint8_t* receiveBuffer,
   uint16_t length
@@ -432,16 +434,17 @@ static ErrorStatus w25qxx_ValidateRange(
 
 // -------------------------------------------------------------
 /**
-  * @brief Transfer one full-duplex SPI2 payload using DMA.
+  * @brief Transfer one SPI2 payload using polling or DMA.
   * @param transmitBuffer (const uint8_t*) Source data, or NULL to send zeros.
   * @param receiveBuffer (uint8_t*) Destination, or NULL to discard received data.
   * @param length (uint16_t) Number of bytes to exchange.
-  * @retval (ErrorStatus) Status of DMA setup and completion.
+  * @retval (ErrorStatus) Status of the HAL transfer.
   *
-  * Memory increment is disabled for a missing source or destination so that
-  * DMA repeatedly uses one dummy byte without accessing beyond its bounds.
+  * Short command, address, and status transfers use polling to avoid DMA setup
+  * overhead. Larger payloads use DMA. For DMA, memory increment is disabled
+  * for a missing source or destination so one dummy byte can be reused safely.
   */
-static ErrorStatus w25qxx_TransferDMA(
+static ErrorStatus w25qxx_Transfer(
   const uint8_t* transmitBuffer,
   uint8_t* receiveBuffer,
   uint16_t length
@@ -451,6 +454,39 @@ static ErrorStatus w25qxx_TransferDMA(
   uint32_t startTick;
 
   if (length == 0U) return (SUCCESS);
+
+  if (length <= W25QXX_POLLING_TRANSFER_LIMIT) {
+    HAL_StatusTypeDef status;
+
+    if ((transmitBuffer != NULL) && (receiveBuffer != NULL)) {
+      status = HAL_SPI_TransmitReceive(
+        w25qxxDevice.spi,
+        transmitBuffer,
+        receiveBuffer,
+        length,
+        W25QXX_POLLING_TIMEOUT_MS
+      );
+    } else if (transmitBuffer != NULL) {
+      status = HAL_SPI_Transmit(
+        w25qxxDevice.spi,
+        transmitBuffer,
+        length,
+        W25QXX_POLLING_TIMEOUT_MS
+      );
+    } else if (receiveBuffer != NULL) {
+      status = HAL_SPI_Receive(
+        w25qxxDevice.spi,
+        receiveBuffer,
+        length,
+        W25QXX_POLLING_TIMEOUT_MS
+      );
+    } else {
+      return (ERROR);
+    }
+
+    return ((status == HAL_OK) ? SUCCESS : ERROR);
+  }
+
   if ((w25qxxDevice.spi->hdmarx == NULL)
       || (w25qxxDevice.spi->hdmatx == NULL)) {
     return (ERROR);
@@ -514,13 +550,13 @@ static ErrorStatus w25qxx_SendHeader(
   uint8_t dummy = 0U;
 
   if (addressLength > sizeof(addressBytes)) return (ERROR);
-  if (w25qxx_TransferDMA(&command, NULL, 1U) != SUCCESS) return (ERROR);
+  if (w25qxx_Transfer(&command, NULL, 1U) != SUCCESS) return (ERROR);
 
   if (addressLength > 0U) {
     addressBytes[0] = (uint8_t)(address >> 16U);
     addressBytes[1] = (uint8_t)(address >> 8U);
     addressBytes[2] = (uint8_t)address;
-    if (w25qxx_TransferDMA(
+    if (w25qxx_Transfer(
         addressBytes,
         NULL,
         addressLength
@@ -530,7 +566,7 @@ static ErrorStatus w25qxx_SendHeader(
   }
 
   while (dummyLength-- > 0U) {
-    if (w25qxx_TransferDMA(&dummy, NULL, 1U) != SUCCESS) return (ERROR);
+    if (w25qxx_Transfer(&dummy, NULL, 1U) != SUCCESS) return (ERROR);
   }
 
   return (SUCCESS);
@@ -576,7 +612,7 @@ static ErrorStatus w25qxx_ReadCommand(
         ? W25QXX_DMA_TRANSFER_LIMIT
         : length
     );
-    status = w25qxx_TransferDMA(NULL, buffer, chunk);
+    status = w25qxx_Transfer(NULL, buffer, chunk);
     buffer += chunk;
     length -= chunk;
   }
@@ -659,7 +695,7 @@ static ErrorStatus w25qxx_ProgramPage(
     0U
   );
   if (status == SUCCESS) {
-    status = w25qxx_TransferDMA(buffer, NULL, length);
+    status = w25qxx_Transfer(buffer, NULL, length);
   }
 
   return (w25qxx_EndTransaction(status));
@@ -704,7 +740,7 @@ static ErrorStatus w25qxx_EraseUnit(uint8_t command, uint32_t address) {
   */
 static ErrorStatus w25qxx_WaitWhileBusy(void) {
   uint8_t statusRegister = W25QXX_STATUS_BUSY;
-  uint32_t remainingPolls = W25QXX_BUSY_POLL_LIMIT;
+  uint32_t const startTick = HAL_GetTick();
 
   while ((statusRegister & W25QXX_STATUS_BUSY) != 0U) {
     if (w25qxx_ReadCommand(
@@ -717,7 +753,7 @@ static ErrorStatus w25qxx_WaitWhileBusy(void) {
       ) != SUCCESS) {
       return (ERROR);
     }
-    if (--remainingPolls == 0U) return (ERROR);
+    if ((HAL_GetTick() - startTick) >= W25QXX_BUSY_TIMEOUT_MS) return (ERROR);
   }
 
   return (SUCCESS);

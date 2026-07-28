@@ -23,7 +23,6 @@
 #include "rtos_tasks.h"
 #include "task.h"
 #include "touch_service.h"
-#include "w25qxx.h"
 
 I2C_HandleTypeDef hi2c1;
 DMA_HandleTypeDef hdma_i2c1_rx;
@@ -73,10 +72,6 @@ int main(void) {
     Error_Handler();
 
   printf("Hello printf();\n");
-  printf(
-    "W25Q64: %s\n",
-    (W25Qxx_Init() == SUCCESS) ? "ready" : "self-test failed"
-  );
 
   if (RtosTasks_Init() != RTOS_TASKS_STATUS_OK)
     Error_Handler();
