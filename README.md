@@ -42,7 +42,8 @@ updates the RTC only after receiving a valid response.
 Failed DNS or SNTP requests leave the current RTC value unchanged and are
 retried after one minute. A successful clock is synchronized again every six
 hours to limit drift. Local time-zone conversion is intentionally left to the
-presentation layer.
+presentation layer. If the LSE crystal cannot start, the time service reports
+the failure and remains inactive without stopping the rest of the device.
 
 ## Project structure
 

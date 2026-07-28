@@ -81,6 +81,12 @@ void TimeService_Tick(void) {
 static void timeService_Task(void* argument) {
   (void)argument;
 
+  if (RtcClock_Init() != HAL_OK) {
+    printf("RTC: LSE initialization failed; service disabled\n");
+    for (;;)
+      vTaskDelay(pdMS_TO_TICKS(TIME_SERVICE_RETRY_PERIOD_MS));
+  }
+
   timeService_PrintRetainedTime();
 
   while (!W5500_IsReady())
