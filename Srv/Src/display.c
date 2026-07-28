@@ -1,11 +1,14 @@
 /**
   ******************************************************************************
   * @file           : display.c
-  * @brief          : This file contain display routones code.
+  * @brief          : Touch-driven display demonstration service.
+  * @project        : STM32F401 Test Platform
+  * @platform       : STMicroelectronics STM32F401RCT6
+  * @created        : 05.01.2026 03:37:54 PM
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2017-2026 Askug Ltd.
+  * Copyright (c) 2017-2026 Dmitry Slobodchikov
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -17,119 +20,53 @@
 
 #include "display.h"
 
-
-
-#define SIMPLE_PAUSE 1000U;
-
-extern TouchState_t touch_activated_flag;
-
-static __IO uint32_t step = 0;
-
-
-
-
-
-/////////////////////////////////////////////////////////////////////////////
-
-
-// --------------------------------------------------------------------------
-
-static void on_down(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
-  //
-}
-
-
-
-
-// --------------------------------------------------------------------------
-
-static void on_up(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
-  // Font_TypeDef font = {
-  //   .Bgcolor      = COLOR_BLUE,
-  //   .Color        = COLOR_LIME,
-  //   .Font         = (uint8_t*)&font_dot_20x28,
-  //   .Height       = 32,
-  //   .Width        = 24,
-  //   .BytesPerGlif = 96,
-  // };
+/**
+  * @brief Render coordinates and crosshairs for a released touch.
+  * @param display (Display_TypeDef*) Initialized display object.
+  * @param touchScreen (TouchScreen_TypeDef*) Processed touchscreen object.
+  */
+static void display_OnUp(Display_TypeDef* display, TouchScreen_TypeDef* touchScreen) {
   Font_TypeDef font = {
-    .Bgcolor      = COLOR_BLUE,
-    .Color        = COLOR_LIME,
-    .Font         = (uint8_t*)&font_dot_10x14,
-    .Height       = 16,
-    .Width        = 12,
-    .BytesPerGlif = 24,
+    .backgroundColor = DISPLAY_COLOR_BLUE,
+    .color = DISPLAY_COLOR_LIME,
+    .fontData = (const uint8_t*)&fontDot10x14,
+    .height = 16,
+    .width = 12,
+    .bytesPerGlyph = 24,
   };
 
-  // Display_PrintSymbol(screen, 100, 150, &font, 'R');
+  Display_DrawVLine(display, touchScreen->context->lastX, 0, ST7796_DISPLAY_HEIGHT, 2, DISPLAY_COLOR_BLACK, DISPLAY_LAYER_FRONT);
+  Display_DrawHLine(display, 0, touchScreen->context->lastY, ST7796_DISPLAY_WIDTH, 2, DISPLAY_COLOR_BLACK, DISPLAY_LAYER_FRONT);
 
-  Display_DrawVLine(screen, touch->Context->LastX, 0, DISPLAY_HEIGHT, 2, COLOR_BLACK, FRONT);
-  Display_DrawHLine(screen, 0, touch->Context->LastY, DISPLAY_WIDTH, 2, COLOR_BLACK, FRONT);
+  char positionText[20];
+  snprintf(positionText, sizeof(positionText), "x:%u y:%u\n",
+    touchScreen->context->x, touchScreen->context->y);
+  Display_FillRectangle(display, 40, 80, (font.width * 10), font.height, DISPLAY_COLOR_BLACK, DISPLAY_LAYER_FRONT);
+  Display_PrintString(display, 10, 80, &font, positionText);
 
-  char position[20];
-  sprintf(position, "x:%d y:%d\n", touch->Context->X, touch->Context->Y); 
-  Display_FillRectangle(screen, 40, 80, (font.Width * 10), font.Height, COLOR_BLACK, FRONT);
-  Display_PrintString(screen, 10, 80, &font, position);
+  Display_DrawVLine(display, touchScreen->context->x, 0, ST7796_DISPLAY_HEIGHT, 2, DISPLAY_COLOR_WHITE, DISPLAY_LAYER_FRONT);
+  Display_DrawHLine(display, 0, touchScreen->context->y, ST7796_DISPLAY_WIDTH, 2, DISPLAY_COLOR_WHITE, DISPLAY_LAYER_FRONT);
 
-  Display_DrawVLine(screen, touch->Context->X, 0, DISPLAY_HEIGHT, 2, COLOR_WHITE, FRONT);
-  Display_DrawHLine(screen, 0, touch->Context->Y, DISPLAY_WIDTH, 2, COLOR_WHITE, FRONT);
-
-  touch->Context->LastX = touch->Context->X;
-  touch->Context->LastY = touch->Context->Y;
+  touchScreen->context->lastX = touchScreen->context->x;
+  touchScreen->context->lastY = touchScreen->context->y;
 }
 
+void Display_Run(Display_TypeDef* display, TouchScreen_TypeDef* touchScreen) {
 
+  if (display->lock == ENABLE) return;
+  if (touchInterruptState != TOUCH_STATE_ACTIVE) return;
 
-// --------------------------------------------------------------------------
+  TouchScreen_Process(touchScreen);
 
-static void on_move(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
-  //
-}
-
-
-
-
-// --------------------------------------------------------------------------
-
-static void on_hold(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
-  //
-}
-
-
-
-
-// --------------------------------------------------------------------------
-
-void Display_Run(Display_TypeDef* screen, TouchScreen_TypeDef* touch) {
-
-  if (screen->Lock == ENABLE) return;
-  if (touch_activated_flag != TOUCH_ACTIVE) return;
-
-  TouchScreen_Process(touch);
-
-  switch (touch->Event) {
-    case TOUCH_ON_DOWN:
-      on_down(screen, touch);
+  switch (touchScreen->event) {
+    case TOUCH_EVENT_UP:
+      display_OnUp(display, touchScreen);
       break;
-    
-    case TOUCH_ON_UP:
-      on_up(screen, touch);
-      break;
-    
-    case TOUCH_ON_HOLD:
-      on_hold(screen, touch);
-      break;
-    
-    case TOUCH_ON_MOVE:
-      on_move(screen, touch);
-      break;
-    
-    case TOUCH_ON_IDLE:
-      default:
+
+    case TOUCH_EVENT_IDLE:
+    default:
       __NOP();
       break;
   }
 }
-
-
 

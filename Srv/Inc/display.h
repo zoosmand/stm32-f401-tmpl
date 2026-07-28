@@ -1,13 +1,14 @@
 /**
   ******************************************************************************
   * @file           : display.h
-  * @brief          : Header for display.c file.
-  *                   This file contains the common defines of display routines
-  *                   code.
+  * @brief          : Touch-driven display demonstration service.
+  * @project        : STM32F401 Test Platform
+  * @platform       : STMicroelectronics STM32F401RCT6
+  * @created        : 05.01.2026 03:37:54 PM
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2017-2026 Askug Ltd.
+  * Copyright (c) 2017-2026 Dmitry Slobodchikov
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -17,28 +18,24 @@
   ******************************************************************************
   */
 
-
-
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __DISPLAY_H
-#define __DISPLAY_H
+#ifndef DISPLAY_H
+#define DISPLAY_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 #include "main.h"
 
-
-
-void Display_Run(Display_TypeDef*, TouchScreen_TypeDef*);
-
-
-
+/**
+  * @brief Process a pending touch event and update the demonstration display.
+  * @param display (Display_TypeDef*) Initialized display object.
+  * @param touchScreen (TouchScreen_TypeDef*) Initialized touchscreen object.
+  */
+void Display_Run(Display_TypeDef* display, TouchScreen_TypeDef* touchScreen);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __DISPLAY_H */
+#endif /* DISPLAY_H */

@@ -1,165 +1,153 @@
 /**
   ******************************************************************************
   * @file           : utils.c
-  * @brief          : Rrogram utilities
+  * @brief          : Application delays, error handling, and printf output.
+  * @project        : STM32F401 Test Platform
+  * @platform       : STMicroelectronics STM32F401RCT6
+  * @created        : 06.05.2026 07:03:36 PM
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2017-2026 Dmitry Slobodchikov
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
   ******************************************************************************
   */
 
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+#define DISPLAY_PRINT_BUFFER_SIZE 78U
+#define DISPLAY_PRINT_X           10U
+#define DISPLAY_PRINT_Y           310U
+#define DISPLAY_PRINT_LINE_LIMIT  32U
 
+static char displayPrintBuffer[DISPLAY_PRINT_BUFFER_SIZE];
+static uint16_t displayPrintBufferCount = 0;
+static uint16_t displayPrintLineCount = 0;
 
-
-/********************************************************************************/
-/*                         printf() output supply block                         */
-/********************************************************************************/
-
-
-static char print_dspl_buf[78];
-static uint16_t print_dspl_buf_cnt = 0;
-static uint16_t print_dspl_line_cnt = 0;
-
-// extern Display_TypeDef* display_0;
-
-
-__STATIC_INLINE void print_dspl(Display_TypeDef*);
-
-
-
+__STATIC_INLINE void utils_PrintDisplayLine(Display_TypeDef*);
 
 /**
-  * @brief  Sends a symbol into ITM channel. It could be cought with SWO pin on an MC. 
-  * @param ch: a symbol to be output
-  * @param channel: number of an ITM channel
-  * @retval the same symbol 
+  * @brief Send one character through an enabled ITM stimulus channel.
+  * @param character (uint32_t) Character value to send.
+  * @param channel (uint32_t) ITM stimulus channel number.
+  * @retval (uint32_t) The supplied character value.
   */
- __STATIC_INLINE uint32_t ITM_SendCharChannel(uint32_t ch, uint32_t channel) {
-  /* ITM enabled and ITM Port enabled */
- if (((ITM->TCR & ITM_TCR_ITMENA_Msk) != 0UL) && ((ITM->TER & (1 << channel)) != 0UL)) {
-   while (ITM->PORT[channel].u32 == 0UL) {
-     __NOP();
-   }
-   ITM->PORT[channel].u8 = (uint8_t)ch;
- }
- return (ch);
+__STATIC_INLINE uint32_t utils_SendItmCharacter(uint32_t character, uint32_t channel) {
+  if (((ITM->TCR & ITM_TCR_ITMENA_Msk) != 0UL) &&
+      ((ITM->TER & (1UL << channel)) != 0UL)) {
+    while (ITM->PORT[channel].u32 == 0UL) {
+      __NOP();
+    }
+    ITM->PORT[channel].u8 = (uint8_t)character;
+  }
+  return character;
 }
-
-
-
-void __attribute__((weak)) Error_Handler(void) {
-  while (1);
-}
-
 
 /**
- * @brief  Sends a symbol into USART. 
- * @param device: a pointer USART_TypeDef
- * @param ch: a symbol to be output
- * @param check: a pointer to a BitBand check bit
- * @retval none: 
- */
-__STATIC_INLINE void _putc(uint8_t ch) {
- if (ch == '\n') _putc('\r');
+  * @brief Route one printf character to the configured output devices.
+  * @param character (uint8_t) Character to send.
+  */
+__STATIC_INLINE void utils_PutCharacter(uint8_t character) {
+  if (character == '\n') utils_PutCharacter('\r');
 
   #ifdef SWO_ITM
-    ITM_SendCharChannel(ch, SWO_ITM);
+    utils_SendItmCharacter(character, SWO_ITM);
   #endif
 
   #ifdef DSPL_OUT
-  if (ch == '\n') {
-    for (uint16_t i = print_dspl_buf_cnt; i < sizeof(print_dspl_buf); i++) {
-      print_dspl_buf[i] = ' ';
+  if (character == '\n') {
+    for (uint16_t index = displayPrintBufferCount; index < sizeof(displayPrintBuffer); index++) {
+      displayPrintBuffer[index] = ' ';
     }
-    print_dspl_buf_cnt = 0;
-    print_dspl(display_0);
-  } else {
-    print_dspl_buf[print_dspl_buf_cnt++] = ch;
+    displayPrintBufferCount = 0;
+    utils_PrintDisplayLine(displayDevice);
+  } else if (displayPrintBufferCount < sizeof(displayPrintBuffer)) {
+    displayPrintBuffer[displayPrintBufferCount++] = character;
   }
   #endif
 
   #ifdef USART_OUT
     while (!(PREG_CHECK(USART_OUT->SR, USART_SR_TXE_Pos)));
-    USART_OUT->DR = ch;
+    USART_OUT->DR = character;
   #endif
 }
 
-
-
 /**
- * @brief An interpretation of the __weak system _write()
- * @param file: IO file
- * @param ptr: pointer to a char(symbol) array
- * @param len: length oa the array
- * @retval length of the array 
- */
-int _write(int32_t file, char *ptr, int32_t len) {
- // static uint32_t check = 0;
- for(int32_t i = 0 ; i < len ; i++) {
-   _putc(*ptr++);  
- }
- return len;
+  * @brief Provide the newlib write syscall used by printf.
+  * @param fileDescriptor (int32_t) Newlib file descriptor; currently ignored.
+  * @param data (char*) Characters to write.
+  * @param length (int32_t) Number of characters to write.
+  * @retval (int) Number of characters accepted.
+  */
+int _write(int32_t fileDescriptor, char* data, int32_t length) {
+  (void)fileDescriptor;
+  for (int32_t index = 0; index < length; index++) {
+    utils_PutCharacter(*data++);
+  }
+  return length;
 }
 
-
-
-__STATIC_INLINE void _DWT_Init(void) {
+/** @brief Enable and reset the DWT cycle counter. */
+__STATIC_INLINE void utils_InitCycleCounter(void) {
   DWT->CYCCNT = 0;
   DWT->CTRL |= DWT_CTRL_CYCEVTENA_Msk | DWT_CTRL_CYCCNTENA_Msk;
   __DSB();
   __ISB();
 }
 
-
-void _delay_us(uint32_t us) {
-  _DWT_Init();
-  uint32_t const start = DWT->CYCCNT;
-  uint32_t const ticks = us * (HAL_RCC_GetSysClockFreq() / 1000000U);
-  while ((READ_REG(DWT->CYCCNT) - start) < ticks) { __asm volatile("nop"); }
+void Delay_Microseconds(uint32_t delayUs) {
+  utils_InitCycleCounter();
+  uint32_t const startCycle = DWT->CYCCNT;
+  uint32_t const delayCycles = delayUs * (HAL_RCC_GetSysClockFreq() / 1000000U);
+  while ((READ_REG(DWT->CYCCNT) - startCycle) < delayCycles) {
+    __NOP();
+  }
   DWT->CTRL &= ~(DWT_CTRL_CYCEVTENA_Msk | DWT_CTRL_CYCCNTENA_Msk);
 }
 
-
-
-
-void _delay_ms(uint32_t ms) {
-  uint32_t delay_threshold = HAL_GetTick() + ms;
-  while (delay_threshold >= HAL_GetTick()) {__asm volatile("nop");};
+void Delay_Milliseconds(uint32_t delayMs) {
+  uint32_t startTick = HAL_GetTick();
+  while ((HAL_GetTick() - startTick) < delayMs) {
+    __NOP();
+  }
 }
 
-
-
-
-__STATIC_INLINE void print_dspl(Display_TypeDef* screen) {
+/**
+  * @brief Render the completed printf line on the display.
+  * @param display (Display_TypeDef*) Initialized display object.
+  */
+__STATIC_INLINE void utils_PrintDisplayLine(Display_TypeDef* display) {
 
   Font_TypeDef font = {
-    .Bgcolor      = COLOR_BLACK,
-    .Color        = COLOR_LIME,
-    .Font         = (uint8_t*)&font_dot_5x7,
-    .Height       = 8,
-    .Width        = 6,
-    .BytesPerGlif = 6,
+    .backgroundColor = DISPLAY_COLOR_BLACK,
+    .color = DISPLAY_COLOR_LIME,
+    .fontData = (const uint8_t*)&fontDot5x7,
+    .height = 8,
+    .width = 6,
+    .bytesPerGlyph = 6,
   };
 
-  #define PRINTF_Y_POS 310
-  #define PRINTF_X_POS 10
+  Display_PrintString(display, DISPLAY_PRINT_X,
+    (DISPLAY_PRINT_Y - (displayPrintLineCount * font.height)), &font,
+    displayPrintBuffer);
 
-
-  Display_PrintString(screen, PRINTF_X_POS, (PRINTF_Y_POS - (print_dspl_line_cnt * font.Height)), &font, print_dspl_buf);
-
-  if (print_dspl_line_cnt++ > 32) {
-    print_dspl_line_cnt = 0;
+  if (displayPrintLineCount++ > DISPLAY_PRINT_LINE_LIMIT) {
+    displayPrintLineCount = 0;
   } else {
     Display_FillRectangle(
-      screen, 
-      PRINTF_X_POS,
-      (PRINTF_Y_POS - (print_dspl_line_cnt * font.Height)), 
-      (sizeof(print_dspl_buf) * font.Width),
-      font.Height, 
-      font.Bgcolor, 
-      FRONT
+      display,
+      DISPLAY_PRINT_X,
+      (DISPLAY_PRINT_Y - (displayPrintLineCount * font.height)),
+      (sizeof(displayPrintBuffer) * font.width),
+      font.height,
+      font.backgroundColor,
+      DISPLAY_LAYER_FRONT
     );
   }
 
 }
-
