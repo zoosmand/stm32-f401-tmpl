@@ -19,6 +19,7 @@
   */
 
 #include "main.h"
+#include "rtos_tasks.h"
 
 #define DISPLAY_PRINT_BUFFER_SIZE 78U
 #define DISPLAY_PRINT_X           10U
@@ -86,9 +87,11 @@ __STATIC_INLINE void utils_PutCharacter(uint8_t character) {
   */
 int _write(int32_t fileDescriptor, char* data, int32_t length) {
   (void)fileDescriptor;
+  RtosTasks_DisplayLock();
   for (int32_t index = 0; index < length; index++) {
     utils_PutCharacter(*data++);
   }
+  RtosTasks_DisplayUnlock();
   return length;
 }
 

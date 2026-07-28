@@ -15,7 +15,10 @@
             "${workspaceRoot}/Core/Inc",
             "${workspaceRoot}/Periph/Inc",
             "${workspaceRoot}/Srv/Inc",
-            "${workspaceRoot}/Ethernet"
+            "${workspaceRoot}/FreeRTOS-Kernel/include",
+            "${workspaceRoot}/FreeRTOS-Kernel/portable/GCC/ARM_CM4F",
+            "${workspaceRoot}/Ethernet",
+            "${workspaceRoot}/Ethernet/loopback"
          ],
          "defines": [
             "USE_FULL_LL_DRIVER",

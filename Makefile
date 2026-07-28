@@ -40,6 +40,10 @@ Core/Src/main.c \
 Core/Src/stm32f4xx_it.c \
 Core/Src/stm32f4xx_hal_msp.c \
 Core/Src/utils.c \
+FreeRTOS-Kernel/list.c \
+FreeRTOS-Kernel/queue.c \
+FreeRTOS-Kernel/tasks.c \
+FreeRTOS-Kernel/portable/GCC/ARM_CM4F/port.c \
 $(wildcard Periph/Src/*.c) \
 $(wildcard Srv/Src/*.c) \
 $(wildcard Ethernet/*.c) \
@@ -137,6 +141,8 @@ C_INCLUDES =  \
 -IEthernet/DHCP \
 -IEthernet/DNS \
 -IEthernet/loopback \
+-IFreeRTOS-Kernel/include \
+-IFreeRTOS-Kernel/portable/GCC/ARM_CM4F \
 -IDrivers/STM32F4xx_HAL_Driver/Inc \
 -IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
