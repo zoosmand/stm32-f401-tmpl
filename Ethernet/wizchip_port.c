@@ -26,6 +26,8 @@
 #include "stdbool.h"
 #include "DHCP/dhcp.h"
 #include "DNS/dns.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
 #include "wizchip_port.h"
 
 #define W5500_SPI hspi3
@@ -49,6 +51,8 @@ static wiz_NetInfo networkInfo = {
 #endif
 };
 static volatile bool networkReady;
+static StaticSemaphore_t dnsMutexBuffer;
+static SemaphoreHandle_t dnsMutex;
 
 #define W5500_CS_LOW()     HAL_GPIO_WritePin(ETH_CS_GPIO_Port, ETH_CS_Pin, GPIO_PIN_RESET)
 #define W5500_CS_HIGH()    HAL_GPIO_WritePin(ETH_CS_GPIO_Port, ETH_CS_Pin, GPIO_PIN_SET)
@@ -103,6 +107,9 @@ W5500_StatusTypeDef W5500_Init(void)
     };
 
     networkReady = false;
+    dnsMutex = xSemaphoreCreateMutexStatic(&dnsMutexBuffer);
+    if (dnsMutex == NULL)
+        return W5500_STATUS_INIT_FAILED;
     W5500_RST_LOW();
     HAL_Delay(50);
     W5500_RST_HIGH();
@@ -194,4 +201,25 @@ bool W5500_GetDnsServer(uint8_t dnsServer[4]) {
 
     memcpy(dnsServer, networkInfo.dns, sizeof(networkInfo.dns));
     return true;
+}
+
+bool W5500_ResolveHost(const char* host, uint8_t address[4]) {
+    uint8_t dnsServer[4];
+    bool resolved = false;
+
+    if ((host == NULL) || (address == NULL) || (dnsMutex == NULL)
+        || !W5500_GetDnsServer(dnsServer)) {
+        return false;
+    }
+
+    if (xSemaphoreTake(dnsMutex, portMAX_DELAY) == pdTRUE) {
+        DNS_init(DNS_SOCKET, dnsBuffer);
+        resolved = DNS_run(
+          dnsServer,
+          (uint8_t*)host,
+          address
+        ) == 1;
+        (void)xSemaphoreGive(dnsMutex);
+    }
+    return resolved;
 }

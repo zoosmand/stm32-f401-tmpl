@@ -22,10 +22,12 @@
 
 #include "buzzer_service.h"
 #include "FreeRTOS.h"
+#include "http_monitor_service.h"
 #include "semphr.h"
 #include "task.h"
 #include "time_service.h"
 #include "w25qxx.h"
+#include "watchdog_service.h"
 #include "wizchip_port.h"
 
 #define DEFAULT_TASK_STACK_DEPTH    512U
@@ -58,6 +60,12 @@ RtosTasks_StatusTypeDef RtosTasks_Init(void) {
   if (TimeService_Init() != TIME_SERVICE_STATUS_OK)
     return RTOS_TASKS_STATUS_ERROR;
 
+  if (HttpMonitorService_Init() != HTTP_MONITOR_STATUS_OK)
+    return RTOS_TASKS_STATUS_ERROR;
+
+  if (WatchdogService_Init() != WATCHDOG_SERVICE_STATUS_OK)
+    return RTOS_TASKS_STATUS_ERROR;
+
   if (BuzzerService_Init() != BUZZER_SERVICE_STATUS_OK)
     printf("Buzzer initialization failed\n");
 
@@ -84,6 +92,8 @@ static void rtosTasks_DefaultTask(void* argument) {
 
   if (W5500_Init() != W5500_STATUS_OK)
     printf("W5500 initialization failed\n");
+
+  WatchdogService_Start();
 
   TickType_t lastWakeTick = xTaskGetTickCount();
 

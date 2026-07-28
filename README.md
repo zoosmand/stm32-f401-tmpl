@@ -3,13 +3,15 @@
 This project is a firmware platform for a standalone network health-check
 device based on the STM32F401RCT6 microcontroller.
 
-Its goal is to monitor an Internet resource over HTTPS, determine its
+Its goal is to monitor an Internet resource over HTTP, determine its
 availability from the HTTP response status, and present the result locally.
 The display provides status and diagnostic output, while the touchscreen
 allows the device to receive user input.
 
-The project is currently at the platform stage. It provides the hardware
-drivers and FreeRTOS services needed before HTTPS monitoring is added.
+The F401 prototype checks `hvm-a.ic.local:3000` once per minute. It resolves
+the hostname, sends `HEAD /`, and considers only HTTP status `200` healthy.
+DNS, socket, connection, timeout, malformed-response, and non-200 results are
+failures.
 
 ## Current functionality
 
@@ -23,6 +25,28 @@ drivers and FreeRTOS services needed before HTTPS monitoring is added.
 - W25Q64 SPI NOR flash driver with startup self-test
 - LSE-backed hardware RTC synchronized with `pool.ntp.org`
 - Queued passive-buzzer tone generation and startup self-test
+- Periodic HTTP resource health monitoring
+- Persistent CRC-protected HTTP result log in W25Q64 NOR flash
+- Independent watchdog started after flash and network initialization
+
+## Watchdog
+
+The FreeRTOS watchdog service explicitly enables the LSI oscillator and starts
+the IWDG only after the potentially slow W25Q64 self-test and W5500/DHCP
+initialization have finished. It refreshes the watchdog once per second against
+a nominal four-second timeout. IWDG counting is frozen while the core is halted
+by a debugger.
+
+## HTTP health check
+
+The HTTP monitor uses W5500 socket 4. DNS access is serialized with the SNTP
+service because the WIZnet DNS client keeps shared internal state.
+
+Each result is appended to a power-loss-tolerant circular log. A record
+contains its sequence number, RTC UTC calendar value when available, resolved
+IPv4 address, HTTP status, and result category. The log occupies sectors 0
+through 14 of the final 64 KB flash block. Sector 15 remains reserved
+exclusively for the startup flash self-test.
 
 ## Hardware
 
