@@ -23,6 +23,7 @@
 #include "rtos_tasks.h"
 #include "task.h"
 #include "touch_service.h"
+#include "w25qxx.h"
 
 I2C_HandleTypeDef hi2c1;
 DMA_HandleTypeDef hdma_i2c1_rx;
@@ -72,6 +73,10 @@ int main(void) {
     Error_Handler();
 
   printf("Hello printf();\n");
+  printf(
+    "W25Q64: %s\n",
+    (W25Qxx_Init() == SUCCESS) ? "ready" : "self-test failed"
+  );
 
   if (RtosTasks_Init() != RTOS_TASKS_STATUS_OK)
     Error_Handler();
@@ -190,7 +195,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi2.Init.NSS = SPI_NSS_HARD_OUTPUT;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
   hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;

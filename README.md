@@ -20,13 +20,15 @@ drivers and FreeRTOS services needed before HTTPS monitoring is added.
 - Touch-event processing service
 - W5500 Ethernet controller support
 - DHCP and DNS client code
+- W25Q64 SPI NOR flash driver with startup self-test
 
 ## Hardware
 
 - STM32F401RCT6 microcontroller
-- ST7796 TFT display
-- FT6336U touchscreen controller
-- W5500 Ethernet controller
+- ST7796 TFT display on SPI1
+- FT6336U touchscreen controller on I2C1
+- W5500 Ethernet controller on SPI3
+- Winbond W25Q64 flash memory on SPI2
 
 ## Project structure
 
