@@ -18,9 +18,11 @@
   ******************************************************************************
   */
 #include "main.h"
+#include "display_console.h"
 #include "FreeRTOS.h"
 #include "rtos_tasks.h"
 #include "task.h"
+#include "touch_service.h"
 
 I2C_HandleTypeDef hi2c1;
 DMA_HandleTypeDef hdma_i2c1_rx;
@@ -66,12 +68,16 @@ int main(void) {
   displayDevice = ST7796_Init();
   TouchScreen_TypeDef* touchScreen = FT6336U_Init();
 
-  printf("Hello printf();\n");
-
-  if (W5500_Init())
+  if (DisplayConsole_Init(displayDevice) != DISPLAY_CONSOLE_STATUS_OK)
     Error_Handler();
 
-  if (RtosTasks_Init(displayDevice, touchScreen) != RTOS_TASKS_STATUS_OK)
+  printf("Hello printf();\n");
+
+  if (RtosTasks_Init() != RTOS_TASKS_STATUS_OK)
+    Error_Handler();
+
+  if (TouchService_Init(displayDevice, touchScreen) !=
+      TOUCH_SERVICE_STATUS_OK)
     Error_Handler();
 
   vTaskStartScheduler();

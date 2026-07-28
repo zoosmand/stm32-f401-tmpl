@@ -28,11 +28,14 @@ extern "C" {
 #include "main.h"
 
 /**
-  * @brief Process a pending touch event and update the demonstration display.
+  * @brief Handle a processed touch event on the demonstration display.
   * @param display (Display_TypeDef*) Initialized display object.
-  * @param touchScreen (TouchScreen_TypeDef*) Initialized touchscreen object.
+  * @param touchScreen (TouchScreen_TypeDef*) Processed touchscreen object.
   */
-void Display_Run(Display_TypeDef* display, TouchScreen_TypeDef* touchScreen);
+void Display_HandleTouchEvent(
+  Display_TypeDef* display,
+  TouchScreen_TypeDef* touchScreen
+);
 
 #ifdef __cplusplus
 }

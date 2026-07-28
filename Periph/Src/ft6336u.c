@@ -29,7 +29,7 @@ EXTI_HandleTypeDef touchExtiLine = {
   .Line             = TC_INT_PIN_POSITION,
   .PendingCallback  = ft6336u_InterruptCallback,
 };
-TouchState_TypeDef touchInterruptState = TOUCH_STATE_IDLE;
+static volatile uint32_t touchInterruptSequence;
 
 /** @brief Reset the FT6336U through its reset GPIO. */
 __STATIC_INLINE void ft6336u_Reset(void) {
@@ -40,7 +40,11 @@ __STATIC_INLINE void ft6336u_Reset(void) {
 }
 
 static void ft6336u_InterruptCallback(void) {
-  touchInterruptState = TOUCH_STATE_ACTIVE;
+  touchInterruptSequence++;
+}
+
+uint32_t FT6336U_GetInterruptSequence(void) {
+  return touchInterruptSequence;
 }
 
 TouchScreen_TypeDef* FT6336U_Init(void) {
@@ -76,7 +80,11 @@ TouchScreen_TypeDef* FT6336U_Init(void) {
   gpioConfig.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(TC_INT_GPIO_Port, &gpioConfig);
 
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  /*
+   * This ISR only latches a flag and does not call FreeRTOS. Keep it above the
+   * BASEPRI mask used for kernel critical sections.
+   */
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, FT6336U_INTERRUPT_PRIORITY, 0U);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
   ft6336u_Reset();
@@ -262,8 +270,6 @@ HAL_StatusTypeDef TouchScreen_Process(TouchScreen_TypeDef* device) {
     default:
       break;
   }
-
-  touchInterruptState = TOUCH_STATE_IDLE;
 
   return HAL_OK;
 }

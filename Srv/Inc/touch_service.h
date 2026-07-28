@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
-  * @file           : rtos_tasks.h
-  * @brief          : Application FreeRTOS task creation and shared locks.
+  * @file           : touch_service.h
+  * @brief          : FreeRTOS touchscreen event-processing service.
   * @project        : STM32F401 Test Platform
   * @platform       : STMicroelectronics STM32F401RCT6
   * @created        : 28.07.2026
@@ -18,41 +18,36 @@
   ******************************************************************************
   */
 
-#ifndef RTOS_TASKS_H
-#define RTOS_TASKS_H
+#ifndef TOUCH_SERVICE_H
+#define TOUCH_SERVICE_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "main.h"
+#include "display.h"
 
 /**
-  * @brief RTOS application initialization result.
+  * @brief Touchscreen service initialization result.
   */
 typedef enum {
-  RTOS_TASKS_STATUS_OK = 0,
-  RTOS_TASKS_STATUS_ERROR
-} RtosTasks_StatusTypeDef;
+  TOUCH_SERVICE_STATUS_OK = 0,
+  TOUCH_SERVICE_STATUS_ERROR
+} TouchService_StatusTypeDef;
 
 /**
-  * @brief Create the default application task.
-  * @retval (RtosTasks_StatusTypeDef) Task creation result.
+  * @brief Create the touchscreen event-processing task.
+  * @param display (Display_TypeDef*) Initialized display object.
+  * @param touchScreen (TouchScreen_TypeDef*) Initialized touchscreen object.
+  * @retval (TouchService_StatusTypeDef) Task creation result.
   */
-RtosTasks_StatusTypeDef RtosTasks_Init(void);
-
-/**
-  * @brief Lock the display for a task-level drawing operation.
-  */
-void RtosTasks_DisplayLock(void);
-
-/**
-  * @brief Release the display after a task-level drawing operation.
-  */
-void RtosTasks_DisplayUnlock(void);
+TouchService_StatusTypeDef TouchService_Init(
+  Display_TypeDef* display,
+  TouchScreen_TypeDef* touchScreen
+);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* RTOS_TASKS_H */
+#endif /* TOUCH_SERVICE_H */

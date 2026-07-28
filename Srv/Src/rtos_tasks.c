@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file           : rtos_tasks.c
-  * @brief          : Application FreeRTOS tasks and W5500 access arbitration.
+  * @brief          : Application FreeRTOS task and display access arbitration.
   * @project        : STM32F401 Test Platform
   * @platform       : STMicroelectronics STM32F401RCT6
   * @created        : 28.07.2026
@@ -21,93 +21,34 @@
 #include "rtos_tasks.h"
 
 #include "FreeRTOS.h"
-#include "loopback.h"
 #include "semphr.h"
 #include "task.h"
+#include "wizchip_port.h"
 
-#define DEFAULT_TASK_STACK_DEPTH       256U
-#define WIZ_TASK_STACK_DEPTH           512U
-#define DEFAULT_TASK_PERIOD_MS         10U
-#define WIZ_SERVER_TASK_PERIOD_MS      10U
-#define WIZ_CLIENT_TASK_PERIOD_MS      2560U
-#define WIZ_SERVER_SOCKET              0U
-#define WIZ_CLIENT_SOCKET              1U
-#define WIZ_SERVER_PORT                5300U
-#define WIZ_CLIENT_PORT                54000U
-#define WIZ_LOOPBACK_BUFFER_SIZE       1024U
-
-typedef struct {
-  Display_TypeDef* display;
-  TouchScreen_TypeDef* touchScreen;
-} DefaultTask_ContextTypeDef;
-
-static DefaultTask_ContextTypeDef defaultTaskContext;
+#define DEFAULT_TASK_STACK_DEPTH    512U
+#define DEFAULT_TASK_PERIOD_MS      1000U
 
 static StaticTask_t defaultTaskControlBlock;
 static StackType_t defaultTaskStack[DEFAULT_TASK_STACK_DEPTH];
-static StaticTask_t wizServerTaskControlBlock;
-static StackType_t wizServerTaskStack[WIZ_TASK_STACK_DEPTH];
-static StaticTask_t wizClientTaskControlBlock;
-static StackType_t wizClientTaskStack[WIZ_TASK_STACK_DEPTH];
 
 static StaticSemaphore_t displayMutexBuffer;
 static SemaphoreHandle_t displayMutex;
-static StaticSemaphore_t wizMutexBuffer;
-static SemaphoreHandle_t wizMutex;
-
-static uint8_t wizServerBuffer[WIZ_LOOPBACK_BUFFER_SIZE];
-static uint8_t wizClientBuffer[WIZ_LOOPBACK_BUFFER_SIZE];
-static uint8_t wizClientIpAddress[4] = {172U, 18U, 10U, 18U};
 
 static void rtosTasks_DefaultTask(void*);
-static void rtosTasks_WizServerTask(void*);
-static void rtosTasks_WizClientTask(void*);
 
-RtosTasks_StatusTypeDef RtosTasks_Init(
-  Display_TypeDef* display,
-  TouchScreen_TypeDef* touchScreen
-) {
-  if ((display == NULL) || (touchScreen == NULL))
-    return RTOS_TASKS_STATUS_ERROR;
-
-  defaultTaskContext.display = display;
-  defaultTaskContext.touchScreen = touchScreen;
-
+RtosTasks_StatusTypeDef RtosTasks_Init(void) {
   displayMutex = xSemaphoreCreateMutexStatic(&displayMutexBuffer);
-  wizMutex = xSemaphoreCreateMutexStatic(&wizMutexBuffer);
-  if ((displayMutex == NULL) || (wizMutex == NULL))
+  if (displayMutex == NULL)
     return RTOS_TASKS_STATUS_ERROR;
 
   if (xTaskCreateStatic(
         rtosTasks_DefaultTask,
         "default",
         DEFAULT_TASK_STACK_DEPTH,
-        &defaultTaskContext,
+        NULL,
         tskIDLE_PRIORITY + 1U,
         defaultTaskStack,
         &defaultTaskControlBlock
-      ) == NULL)
-    return RTOS_TASKS_STATUS_ERROR;
-
-  if (xTaskCreateStatic(
-        rtosTasks_WizServerTask,
-        "wiz_server",
-        WIZ_TASK_STACK_DEPTH,
-        NULL,
-        tskIDLE_PRIORITY + 2U,
-        wizServerTaskStack,
-        &wizServerTaskControlBlock
-      ) == NULL)
-    return RTOS_TASKS_STATUS_ERROR;
-
-  if (xTaskCreateStatic(
-        rtosTasks_WizClientTask,
-        "wiz_client",
-        WIZ_TASK_STACK_DEPTH,
-        NULL,
-        tskIDLE_PRIORITY + 2U,
-        wizClientTaskStack,
-        &wizClientTaskControlBlock
       ) == NULL)
     return RTOS_TASKS_STATUS_ERROR;
 
@@ -125,50 +66,15 @@ void RtosTasks_DisplayUnlock(void) {
 }
 
 static void rtosTasks_DefaultTask(void* argument) {
-  DefaultTask_ContextTypeDef* context = argument;
+  (void)argument;
+
+  if (W5500_Init() != W5500_STATUS_OK)
+    printf("W5500 initialization failed\n");
+
   TickType_t lastWakeTick = xTaskGetTickCount();
 
-  for (;;) {
-    RtosTasks_DisplayLock();
-    Display_Run(context->display, context->touchScreen);
-    RtosTasks_DisplayUnlock();
+  for (;;)
     vTaskDelayUntil(&lastWakeTick, pdMS_TO_TICKS(DEFAULT_TASK_PERIOD_MS));
-  }
-}
-
-static void rtosTasks_WizServerTask(void* argument) {
-  (void)argument;
-  TickType_t lastWakeTick = xTaskGetTickCount();
-
-  for (;;) {
-    if (xSemaphoreTake(wizMutex, portMAX_DELAY) == pdTRUE) {
-      (void)loopback_tcps(
-        WIZ_SERVER_SOCKET,
-        wizServerBuffer,
-        WIZ_SERVER_PORT
-      );
-      (void)xSemaphoreGive(wizMutex);
-    }
-    vTaskDelayUntil(&lastWakeTick, pdMS_TO_TICKS(WIZ_SERVER_TASK_PERIOD_MS));
-  }
-}
-
-static void rtosTasks_WizClientTask(void* argument) {
-  (void)argument;
-  TickType_t lastWakeTick = xTaskGetTickCount();
-
-  for (;;) {
-    if (xSemaphoreTake(wizMutex, portMAX_DELAY) == pdTRUE) {
-      (void)loopback_tcpc(
-        WIZ_CLIENT_SOCKET,
-        wizClientBuffer,
-        wizClientIpAddress,
-        WIZ_CLIENT_PORT
-      );
-      (void)xSemaphoreGive(wizMutex);
-    }
-    vTaskDelayUntil(&lastWakeTick, pdMS_TO_TICKS(WIZ_CLIENT_TASK_PERIOD_MS));
-  }
 }
 
 void vApplicationStackOverflowHook(
