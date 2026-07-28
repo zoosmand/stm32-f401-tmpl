@@ -22,6 +22,7 @@ drivers and FreeRTOS services needed before HTTPS monitoring is added.
 - DHCP and DNS client code
 - W25Q64 SPI NOR flash driver with startup self-test
 - LSE-backed hardware RTC synchronized with `pool.ntp.org`
+- Queued passive-buzzer tone generation and startup self-test
 
 ## Hardware
 
@@ -31,6 +32,18 @@ drivers and FreeRTOS services needed before HTTPS monitoring is added.
 - W5500 Ethernet controller on SPI3
 - Winbond W25Q64 flash memory on SPI2
 - 32.768 kHz LSE crystal for the STM32 RTC
+- Passive buzzer on PA8 through a 2N2222 transistor
+
+## Buzzer
+
+TIM1 channel 1 generates a 50% duty-cycle PWM signal on PA8. The output drives
+the base circuit of a 2N2222 transistor rather than powering the passive buzzer
+directly from the MCU pin.
+
+The FreeRTOS buzzer service accepts finite-duration tone requests through a
+static queue, allowing callers to continue without waiting for a tone to end.
+At startup it plays a 2 kHz, 200 ms confirmation tone and then leaves the
+transistor switched off.
 
 ## Network time
 

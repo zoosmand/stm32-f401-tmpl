@@ -20,6 +20,7 @@
 
 #include "rtos_tasks.h"
 
+#include "buzzer_service.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "task.h"
@@ -56,6 +57,9 @@ RtosTasks_StatusTypeDef RtosTasks_Init(void) {
 
   if (TimeService_Init() != TIME_SERVICE_STATUS_OK)
     return RTOS_TASKS_STATUS_ERROR;
+
+  if (BuzzerService_Init() != BUZZER_SERVICE_STATUS_OK)
+    printf("Buzzer initialization failed\n");
 
   return RTOS_TASKS_STATUS_OK;
 }

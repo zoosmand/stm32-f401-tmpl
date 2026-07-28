@@ -67,6 +67,8 @@ void Delay_Milliseconds(uint32_t delayMs);
 #define TFT_RST_GPIO_Port GPIOA
 #define TFT_CS_Pin GPIO_PIN_4
 #define TFT_CS_GPIO_Port GPIOA
+#define BUZZER_Pin GPIO_PIN_8
+#define BUZZER_GPIO_Port GPIOA
 #define ETH_IN_Pin GPIO_PIN_0
 #define ETH_IN_GPIO_Port GPIOB
 #define ETH_RESET_Pin GPIO_PIN_1
