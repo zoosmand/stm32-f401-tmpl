@@ -103,19 +103,11 @@ static void timeService_Task(void* argument) {
 }
 
 static bool timeService_Synchronize(void) {
-  uint8_t dnsServer[4];
   uint8_t ntpServer[4];
   datetime networkTime;
   RtcClock_DateTimeTypeDef rtcTime;
 
-  if (!W5500_GetDnsServer(dnsServer))
-    return false;
-
-  if (DNS_run(
-      dnsServer,
-      (uint8_t*)timeServiceServerName,
-      ntpServer
-    ) != 1) {
+  if (!W5500_ResolveHost((const char*)timeServiceServerName, ntpServer)) {
     printf("RTC: NTP DNS failed\n");
     return false;
   }

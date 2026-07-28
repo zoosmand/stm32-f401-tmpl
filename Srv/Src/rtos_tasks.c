@@ -22,6 +22,7 @@
 
 #include "buzzer_service.h"
 #include "FreeRTOS.h"
+#include "http_monitor_service.h"
 #include "semphr.h"
 #include "task.h"
 #include "time_service.h"
@@ -56,6 +57,9 @@ RtosTasks_StatusTypeDef RtosTasks_Init(void) {
     return RTOS_TASKS_STATUS_ERROR;
 
   if (TimeService_Init() != TIME_SERVICE_STATUS_OK)
+    return RTOS_TASKS_STATUS_ERROR;
+
+  if (HttpMonitorService_Init() != HTTP_MONITOR_STATUS_OK)
     return RTOS_TASKS_STATUS_ERROR;
 
   if (BuzzerService_Init() != BUZZER_SERVICE_STATUS_OK)

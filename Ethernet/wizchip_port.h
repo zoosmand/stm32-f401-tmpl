@@ -53,4 +53,12 @@ bool W5500_IsReady(void);
   */
 bool W5500_GetDnsServer(uint8_t dnsServer[4]);
 
+/**
+  * @brief Resolve a hostname while serializing access to the WIZnet DNS client.
+  * @param host (const char*) Null-terminated hostname.
+  * @param address (uint8_t[4]) Destination IPv4 address.
+  * @retval (bool) true when DNS returned an IPv4 address.
+  */
+bool W5500_ResolveHost(const char* host, uint8_t address[4]);
+
 #endif /* WIZCHIP_PORT_H */
