@@ -50,7 +50,6 @@ $(wildcard Ethernet/*.c) \
 $(wildcard Ethernet/W5500/*.c) \
 $(wildcard Ethernet/DHCP/*.c) \
 $(wildcard Ethernet/DNS/*.c) \
-$(wildcard Ethernet/loopback/*.c) \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c \
@@ -140,7 +139,6 @@ C_INCLUDES =  \
 -IEthernet/W5500 \
 -IEthernet/DHCP \
 -IEthernet/DNS \
--IEthernet/loopback \
 -IFreeRTOS-Kernel/include \
 -IFreeRTOS-Kernel/portable/GCC/ARM_CM4F \
 -IDrivers/STM32F4xx_HAL_Driver/Inc \

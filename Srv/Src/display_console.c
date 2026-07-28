@@ -158,11 +158,11 @@ static void displayConsole_SubmitLine(void) {
     return;
   }
 
-  if (xQueueSend(displayConsoleQueue, &line, 0U) != pdTRUE) {
-    DisplayConsole_LineTypeDef discardedLine;
-    (void)xQueueReceive(displayConsoleQueue, &discardedLine, 0U);
-    (void)xQueueSend(displayConsoleQueue, &line, 0U);
-  }
+  /*
+   * Standard output must never block an application task. If the console
+   * cannot keep up, discard only this new line and preserve queued output.
+   */
+  (void)xQueueSend(displayConsoleQueue, &line, 0U);
 }
 
 static void displayConsole_RenderLine(

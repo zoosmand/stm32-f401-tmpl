@@ -55,7 +55,7 @@ TouchService_StatusTypeDef TouchService_Init(
         touchService_Task,
         "touch",
         TOUCH_SERVICE_TASK_STACK_DEPTH,
-        &touchServiceContext,
+        NULL,
         tskIDLE_PRIORITY + 2U,
         touchServiceTaskStack,
         &touchServiceTaskControlBlock
@@ -66,7 +66,8 @@ TouchService_StatusTypeDef TouchService_Init(
 }
 
 static void touchService_Task(void* argument) {
-  TouchService_ContextTypeDef* context = argument;
+  (void)argument;
+  TouchService_ContextTypeDef* context = &touchServiceContext;
   uint32_t handledInterruptSequence = 0U;
   bool touchSequenceActive = false;
   TickType_t lastWakeTick = xTaskGetTickCount();
