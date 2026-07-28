@@ -48,6 +48,7 @@ static wiz_NetInfo networkInfo = {
   .dhcp = NETINFO_STATIC
 #endif
 };
+static volatile bool networkReady;
 
 #define W5500_CS_LOW()     HAL_GPIO_WritePin(ETH_CS_GPIO_Port, ETH_CS_Pin, GPIO_PIN_RESET)
 #define W5500_CS_HIGH()    HAL_GPIO_WritePin(ETH_CS_GPIO_Port, ETH_CS_Pin, GPIO_PIN_SET)
@@ -101,6 +102,7 @@ W5500_StatusTypeDef W5500_Init(void)
       {2, 2, 2, 2, 2, 2, 2, 2}
     };
 
+    networkReady = false;
     W5500_RST_LOW();
     HAL_Delay(50);
     W5500_RST_HIGH();
@@ -178,5 +180,18 @@ W5500_StatusTypeDef W5500_Init(void)
     printf("GATEWAY: %d.%d.%d.%d\r\n", currentNetworkInfo.gw[0], currentNetworkInfo.gw[1], currentNetworkInfo.gw[2], currentNetworkInfo.gw[3]);
     printf("DNS: %d.%d.%d.%d\r\n", currentNetworkInfo.dns[0], currentNetworkInfo.dns[1], currentNetworkInfo.dns[2], currentNetworkInfo.dns[3]);
 
+    networkReady = true;
     return W5500_STATUS_OK;
+}
+
+bool W5500_IsReady(void) {
+    return networkReady;
+}
+
+bool W5500_GetDnsServer(uint8_t dnsServer[4]) {
+    if (!networkReady || (dnsServer == NULL))
+        return false;
+
+    memcpy(dnsServer, networkInfo.dns, sizeof(networkInfo.dns));
+    return true;
 }

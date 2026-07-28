@@ -39,7 +39,6 @@ extern "C" {
 #include "display.h"
 
 #include "wizchip_port.h"
-#include "loopback/loopback.h"
 
 extern Display_TypeDef* displayDevice;
 

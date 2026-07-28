@@ -50,6 +50,7 @@ $(wildcard Ethernet/*.c) \
 $(wildcard Ethernet/W5500/*.c) \
 $(wildcard Ethernet/DHCP/*.c) \
 $(wildcard Ethernet/DNS/*.c) \
+$(wildcard Ethernet/SNTP/*.c) \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c \
@@ -62,6 +63,8 @@ Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c \
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc.c \
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c \
@@ -139,6 +142,7 @@ C_INCLUDES =  \
 -IEthernet/W5500 \
 -IEthernet/DHCP \
 -IEthernet/DNS \
+-IEthernet/SNTP \
 -IFreeRTOS-Kernel/include \
 -IFreeRTOS-Kernel/portable/GCC/ARM_CM4F \
 -IDrivers/STM32F4xx_HAL_Driver/Inc \

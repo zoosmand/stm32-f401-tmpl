@@ -20,6 +20,7 @@
 #include "main.h"
 #include "display_console.h"
 #include "FreeRTOS.h"
+#include "rtc_clock.h"
 #include "rtos_tasks.h"
 #include "task.h"
 #include "touch_service.h"
@@ -57,6 +58,8 @@ int main(void) {
   HAL_Init();
 
   system_ClockConfigure();
+  if (RtcClock_Init() != HAL_OK)
+    Error_Handler();
 
   MX_GPIO_Init();
   MX_DMA_Init();

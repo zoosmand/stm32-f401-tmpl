@@ -23,6 +23,7 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "task.h"
+#include "time_service.h"
 #include "w25qxx.h"
 #include "wizchip_port.h"
 
@@ -51,6 +52,9 @@ RtosTasks_StatusTypeDef RtosTasks_Init(void) {
         defaultTaskStack,
         &defaultTaskControlBlock
       ) == NULL)
+    return RTOS_TASKS_STATUS_ERROR;
+
+  if (TimeService_Init() != TIME_SERVICE_STATUS_OK)
     return RTOS_TASKS_STATUS_ERROR;
 
   return RTOS_TASKS_STATUS_OK;
@@ -92,4 +96,8 @@ void vApplicationStackOverflowHook(
   taskDISABLE_INTERRUPTS();
   for (;;) {
   }
+}
+
+void vApplicationTickHook(void) {
+  TimeService_Tick();
 }
